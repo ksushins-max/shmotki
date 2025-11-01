@@ -1,7 +1,9 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Link } from "react-router-dom";
-import { Shirt, Sparkles, TrendingUp, ArrowRight } from "lucide-react";
+import { Shirt, Sparkles, TrendingUp, ArrowRight, MessageCircle } from "lucide-react";
+import wardrobeHero from "@/assets/wardrobe-hero.jpg";
+import styleAnalysis from "@/assets/style-analysis.jpg";
 
 const Index = () => {
   return (
@@ -36,9 +38,31 @@ const Index = () => {
           </div>
         </section>
 
+        <div className="grid md:grid-cols-2 gap-8 mb-16">
+          <div className="relative overflow-hidden rounded-2xl shadow-elegant">
+            <img src={wardrobeHero} alt="Современный гардероб" className="w-full h-[400px] object-cover" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-8">
+              <div className="text-white">
+                <h3 className="text-2xl font-bold mb-2">Ваш цифровой гардероб</h3>
+                <p className="text-white/90">Все ваши вещи в одном месте</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="relative overflow-hidden rounded-2xl shadow-elegant">
+            <img src={styleAnalysis} alt="Анализ стиля" className="w-full h-[400px] object-cover" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-8">
+              <div className="text-white">
+                <h3 className="text-2xl font-bold mb-2">AI стилист</h3>
+                <p className="text-white/90">Персональные рекомендации каждый день</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <section className="grid md:grid-cols-3 gap-6 mb-16">
           <Card className="p-8 shadow-soft hover:shadow-elegant transition-smooth">
-            <div className="h-12 w-12 rounded-xl gradient-warm flex items-center justify-center mb-4">
+            <div className="h-12 w-12 rounded-xl gradient-primary flex items-center justify-center mb-4">
               <Shirt className="h-6 w-6 text-white" />
             </div>
             <h3 className="text-xl font-semibold mb-3">Оцифруйте гардероб</h3>
@@ -58,12 +82,12 @@ const Index = () => {
           </Card>
 
           <Card className="p-8 shadow-soft hover:shadow-elegant transition-smooth">
-            <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-green-400 to-emerald-500 flex items-center justify-center mb-4">
-              <TrendingUp className="h-6 w-6 text-white" />
+            <div className="h-12 w-12 rounded-xl gradient-accent flex items-center justify-center mb-4">
+              <MessageCircle className="h-6 w-6 text-white" />
             </div>
-            <h3 className="text-xl font-semibold mb-3">Анализ стиля</h3>
+            <h3 className="text-xl font-semibold mb-3">Чат с AI</h3>
             <p className="text-muted-foreground">
-              AI определит пробелы в гардеробе и подскажет, что добавить для идеального стиля
+              Общайтесь с AI ассистентом и получайте индивидуальные советы по стилю
             </p>
           </Card>
         </section>

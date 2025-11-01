@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { Home, Shirt, Sparkles, TrendingUp, LogOut, User } from "lucide-react";
+import { Home, Shirt, Sparkles, TrendingUp, MessageCircle, LogOut, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -39,6 +39,7 @@ const Navigation = () => {
     { to: "/wardrobe", icon: Shirt, label: "Гардероб" },
     { to: "/recommendations", icon: Sparkles, label: "Рекомендации" },
     { to: "/analysis", icon: TrendingUp, label: "Анализ" },
+    { to: "/chat", icon: MessageCircle, label: "Чат с AI" },
   ];
 
   return (

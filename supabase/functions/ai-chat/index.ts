@@ -11,20 +11,37 @@ serve(async (req) => {
   }
 
   try {
-    const { message, messages } = await req.json();
+    const { message, messages, weather, wardrobe } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
 
     if (!LOVABLE_API_KEY) {
       throw new Error('LOVABLE_API_KEY не настроен');
     }
 
+    let contextInfo = '';
+    
+    if (weather) {
+      contextInfo += `\n\nТекущая погода: ${weather.temp}°C, ${weather.condition} (${weather.location})`;
+    }
+    
+    if (wardrobe && wardrobe.length > 0) {
+      contextInfo += `\n\nГардероб пользователя (${wardrobe.length} вещей):\n`;
+      wardrobe.forEach((item: any) => {
+        contextInfo += `- ${item.name} (${item.category}, ${item.color}, ${item.season})${item.description ? ': ' + item.description : ''}\n`;
+      });
+    }
+
     const systemPrompt = `Вы - профессиональный AI стилист и консультант по моде. 
     Вы помогаете пользователям с:
-    - Подбором одежды и аксессуаров
-    - Созданием стильных образов
+    - Подбором одежды и аксессуаров из их гардероба
+    - Созданием стильных образов с учетом погоды и имеющихся вещей
     - Анализом их гардероба
     - Советами по модным трендам
-    - Рекомендациями с учетом погоды и сезона
+    - Рекомендациями с учетом погоды, сезона и их вещей
+    
+    ВАЖНО: При составлении образов используйте ТОЛЬКО вещи из гардероба пользователя.
+    Учитывайте текущую погоду при рекомендациях.
+    ${contextInfo}
     
     Отвечайте на русском языке, будьте дружелюбны и профессиональны.`;
 

@@ -40,6 +40,7 @@ const Navigation = () => {
     { to: "/recommendations", icon: Sparkles, label: "Рекомендации" },
     { to: "/analysis", icon: TrendingUp, label: "Анализ" },
     { to: "/chat", icon: MessageCircle, label: "Чат с AI" },
+    { to: "/profile", icon: User, label: "Профиль" },
   ];
 
   return (

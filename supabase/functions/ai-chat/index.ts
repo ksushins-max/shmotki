@@ -11,39 +11,40 @@ serve(async (req) => {
   }
 
   try {
-    const { message, messages, weather, wardrobe } = await req.json();
+    const { message, messages, weather, wardrobe, userProfile } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
 
     if (!LOVABLE_API_KEY) {
       throw new Error('LOVABLE_API_KEY не настроен');
     }
 
-    let contextInfo = '';
+    let contextInfo = '\n\nЛокация: Санкт-Петербург, Россия';
     
     if (weather) {
-      contextInfo += `\n\nТекущая погода: ${weather.temp}°C, ${weather.condition} (${weather.location})`;
+      contextInfo += `\nТекущая погода: ${weather.temperature}°C, ${weather.condition}`;
+    }
+
+    if (userProfile) {
+      const profileInfo = [];
+      if (userProfile.gender) profileInfo.push(`пол: ${userProfile.gender === 'male' ? 'мужской' : userProfile.gender === 'female' ? 'женский' : 'другое'}`);
+      if (userProfile.age) profileInfo.push(`возраст: ${userProfile.age}`);
+      if (userProfile.occupation) profileInfo.push(`сфера: ${userProfile.occupation}`);
+      
+      if (profileInfo.length > 0) {
+        contextInfo += `\nПользователь: ${profileInfo.join(', ')}`;
+      }
     }
     
     if (wardrobe && wardrobe.length > 0) {
-      contextInfo += `\n\nГардероб пользователя (${wardrobe.length} вещей):\n`;
+      contextInfo += `\n\nГардероб (${wardrobe.length} вещей):\n`;
       wardrobe.forEach((item: any) => {
-        contextInfo += `- ${item.name} (${item.category}, ${item.color}, ${item.season})${item.description ? ': ' + item.description : ''}\n`;
+        contextInfo += `- ${item.name} (${item.category}, ${item.color}, ${item.season})\n`;
       });
     }
 
-    const systemPrompt = `Вы - профессиональный AI стилист и консультант по моде. 
-    Вы помогаете пользователям с:
-    - Подбором одежды и аксессуаров из их гардероба
-    - Созданием стильных образов с учетом погоды и имеющихся вещей
-    - Анализом их гардероба
-    - Советами по модным трендам
-    - Рекомендациями с учетом погоды, сезона и их вещей
-    
-    ВАЖНО: При составлении образов используйте ТОЛЬКО вещи из гардероба пользователя.
-    Учитывайте текущую погоду при рекомендациях.
-    ${contextInfo}
-    
-    Отвечайте на русском языке, будьте дружелюбны и профессиональны.`;
+    const systemPrompt = `Ты - профессиональный стилист. Давай КОРОТКИЕ конкретные советы (2-3 предложения). 
+Сразу предлагай готовые образы из имеющихся вещей с учетом погоды. 
+НЕ задавай уточняющих вопросов - сразу давай рекомендации.${contextInfo}`;
 
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',

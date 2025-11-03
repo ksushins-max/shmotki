@@ -12,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    const { wardrobe, weather } = await req.json();
+    const { wardrobe, weather, userProfile } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
 
     if (!LOVABLE_API_KEY) {
@@ -41,10 +41,22 @@ serve(async (req) => {
       wardrobeInfo = '\n\nГардероб пользователя пуст. Создайте общие рекомендации по стилю.';
     }
 
+    let profileInfo = '';
+    if (userProfile) {
+      const details = [];
+      if (userProfile.gender) details.push(`пол: ${userProfile.gender === 'male' ? 'мужской' : userProfile.gender === 'female' ? 'женский' : 'другое'}`);
+      if (userProfile.age) details.push(`возраст: ${userProfile.age}`);
+      if (userProfile.occupation) details.push(`сфера: ${userProfile.occupation}`);
+      
+      if (details.length > 0) {
+        profileInfo = `\n\nПрофиль: ${details.join(', ')}`;
+      }
+    }
+
     const prompt = `Создай 7 персональных образов на каждый день недели, начиная с сегодняшнего дня (${getDayInfo(0).day}, ${getDayInfo(0).date}).
     
-Текущая погода: ${weather.temp}°C, ${weather.condition}
-${wardrobeInfo}
+Локация: Санкт-Петербург, Россия
+Текущая погода: ${weather.temp}°C, ${weather.condition}${profileInfo}${wardrobeInfo}
 
 Для каждого дня создай уникальный образ. Верни ответ СТРОГО в формате JSON массива:
 [

@@ -38,6 +38,7 @@ const Chat = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [wardrobe, setWardrobe] = useState<ClothingItem[]>([]);
+  const [userProfile, setUserProfile] = useState<any>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
@@ -50,48 +51,45 @@ const Chat = () => {
   useEffect(() => {
     fetchWeather();
     fetchWardrobe();
+    fetchUserProfile();
   }, []);
 
   const fetchWeather = async () => {
     try {
-      navigator.geolocation.getCurrentPosition(
-        async (position) => {
-          const { latitude, longitude } = position.coords;
-          const response = await fetch(
-            `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,weathercode&timezone=auto`
-          );
-          const data = await response.json();
-          
-          const weatherConditions: { [key: number]: string } = {
-            0: "Ясно",
-            1: "Преимущественно ясно",
-            2: "Переменная облачность",
-            3: "Облачно",
-            45: "Туман",
-            48: "Изморозь",
-            51: "Легкая морось",
-            61: "Небольшой дождь",
-            71: "Небольшой снег",
-            95: "Гроза"
-          };
-
-          setWeather({
-            temp: Math.round(data.current.temperature_2m),
-            condition: weatherConditions[data.current.weathercode] || "Неизвестно",
-            location: "Текущее местоположение"
-          });
-        },
-        () => {
-          // Fallback to default location if geolocation is denied
-          setWeather({
-            temp: 20,
-            condition: "Переменная облачность",
-            location: "Местоположение недоступно"
-          });
-        }
+      // Санкт-Петербург, Россия
+      const latitude = 59.9343;
+      const longitude = 30.3351;
+      
+      const response = await fetch(
+        `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,weathercode&timezone=Europe/Moscow`
       );
+      const data = await response.json();
+      
+      const weatherConditions: { [key: number]: string } = {
+        0: "Ясно",
+        1: "Преимущественно ясно",
+        2: "Переменная облачность",
+        3: "Облачно",
+        45: "Туман",
+        48: "Изморозь",
+        51: "Легкая морось",
+        61: "Небольшой дождь",
+        71: "Небольшой снег",
+        95: "Гроза"
+      };
+
+      setWeather({
+        temp: Math.round(data.current.temperature_2m),
+        condition: weatherConditions[data.current.weathercode] || "Неизвестно",
+        location: "Санкт-Петербург"
+      });
     } catch (error) {
       console.error("Error fetching weather:", error);
+      setWeather({
+        temp: 15,
+        condition: "Переменная облачность",
+        location: "Санкт-Петербург"
+      });
     }
   };
 
@@ -109,6 +107,24 @@ const Chat = () => {
       setWardrobe(data || []);
     } catch (error) {
       console.error("Error fetching wardrobe:", error);
+    }
+  };
+
+  const fetchUserProfile = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("user_id", user.id)
+        .single();
+
+      if (error) throw error;
+      setUserProfile(data);
+    } catch (error) {
+      console.error("Error fetching profile:", error);
     }
   };
 
@@ -132,7 +148,8 @@ const Chat = () => {
             color: item.color,
             season: item.season,
             description: item.description
-          }))
+          })),
+          userProfile
         },
       });
 

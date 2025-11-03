@@ -29,37 +29,54 @@ const Recommendations = () => {
   const [recommendations, setRecommendations] = useState<DayRecommendation[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [weather, setWeather] = useState<WeatherData | null>(null);
+  const [userProfile, setUserProfile] = useState<any>(null);
   const { toast } = useToast();
 
   useEffect(() => {
     fetchWeather();
+    fetchUserProfile();
     generateRecommendations();
   }, []);
 
+  const fetchUserProfile = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("user_id", user.id)
+        .single();
+
+      if (error) throw error;
+      setUserProfile(data);
+    } catch (error) {
+      console.error("Error fetching profile:", error);
+    }
+  };
+
   const fetchWeather = async () => {
     try {
-      navigator.geolocation.getCurrentPosition(
-        async (position) => {
-          const { latitude, longitude } = position.coords;
-          const response = await fetch(
-            `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,weathercode&daily=temperature_2m_max,temperature_2m_min,weathercode&timezone=auto&forecast_days=7`
-          );
-          const data = await response.json();
-          
-          setWeather({
-            temp: Math.round(data.current.temperature_2m),
-            condition: getWeatherCondition(data.current.weathercode)
-          });
-        },
-        () => {
-          setWeather({
-            temp: 20,
-            condition: "Переменная облачность"
-          });
-        }
+      // Санкт-Петербург, Россия
+      const latitude = 59.9343;
+      const longitude = 30.3351;
+      
+      const response = await fetch(
+        `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,weathercode&daily=temperature_2m_max,temperature_2m_min,weathercode&timezone=Europe/Moscow&forecast_days=7`
       );
+      const data = await response.json();
+      
+      setWeather({
+        temp: Math.round(data.current.temperature_2m),
+        condition: getWeatherCondition(data.current.weathercode)
+      });
     } catch (error) {
       console.error("Error fetching weather:", error);
+      setWeather({
+        temp: 15,
+        condition: "Переменная облачность"
+      });
     }
   };
 
@@ -92,7 +109,8 @@ const Recommendations = () => {
       const { data, error } = await supabase.functions.invoke("generate-weekly-recommendations", {
         body: { 
           wardrobe: wardrobe || [],
-          weather: weather || { temp: 20, condition: "Переменная облачность" }
+          weather: weather || { temp: 15, condition: "Переменная облачность" },
+          userProfile: userProfile
         },
       });
 

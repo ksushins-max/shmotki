@@ -171,6 +171,7 @@ const Wardrobe = () => {
                 category={item.category}
                 color={item.color}
                 season={item.season}
+                imageUrl={item.image_url}
               />
             ))
           )}

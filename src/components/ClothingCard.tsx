@@ -1,18 +1,21 @@
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Shirt } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Shirt, Trash2 } from "lucide-react";
 
 interface ClothingCardProps {
+  id: string;
   name: string;
   category: string;
   color: string;
   season: string;
   imageUrl?: string;
+  onDelete: (id: string) => void;
 }
 
-const ClothingCard = ({ name, category, color, season, imageUrl }: ClothingCardProps) => {
+const ClothingCard = ({ id, name, category, color, season, imageUrl, onDelete }: ClothingCardProps) => {
   return (
-    <Card className="overflow-hidden hover:shadow-elegant transition-smooth cursor-pointer group">
+    <Card className="overflow-hidden hover:shadow-elegant transition-smooth group relative">
       <div className="aspect-square bg-muted flex items-center justify-center group-hover:scale-105 transition-smooth overflow-hidden">
         {imageUrl ? (
           <img 
@@ -25,10 +28,25 @@ const ClothingCard = ({ name, category, color, season, imageUrl }: ClothingCardP
         )}
       </div>
       <div className="p-4">
-        <h3 className="font-semibold mb-2">{name}</h3>
-        <div className="flex flex-wrap gap-2">
-          <Badge variant="secondary">{color}</Badge>
-          <Badge variant="outline">{season}</Badge>
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex-1">
+            <h3 className="font-semibold mb-2">{name}</h3>
+            <div className="flex flex-wrap gap-2">
+              <Badge variant="secondary">{color}</Badge>
+              <Badge variant="outline">{season}</Badge>
+            </div>
+          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete(id);
+            }}
+            className="h-8 w-8 text-muted-foreground hover:text-destructive"
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
         </div>
       </div>
     </Card>

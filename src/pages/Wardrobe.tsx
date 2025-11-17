@@ -115,6 +115,27 @@ const Wardrobe = () => {
     fetchClothingItems();
   };
 
+  const handleDeleteItem = async (id: string) => {
+    const { error } = await supabase
+      .from("clothing_items")
+      .delete()
+      .eq("id", id);
+
+    if (error) {
+      toast({
+        title: "Ошибка",
+        description: "Не удалось удалить вещь",
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Удалено",
+        description: "Вещь успешно удалена из гардероба",
+      });
+      fetchClothingItems();
+    }
+  };
+
   if (!user) {
     return (
       <div className="min-h-screen gradient-soft flex items-center justify-center">
@@ -167,11 +188,13 @@ const Wardrobe = () => {
             clothingItems.map((item) => (
               <ClothingCard
                 key={item.id}
+                id={item.id}
                 name={item.name}
                 category={item.category}
                 color={item.color}
                 season={item.season}
                 imageUrl={item.image_url}
+                onDelete={handleDeleteItem}
               />
             ))
           )}

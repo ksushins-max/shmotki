@@ -12,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    const { wardrobe, weather, userProfile } = await req.json();
+    const { wardrobe, weatherForecast, userProfile } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
 
     if (!LOVABLE_API_KEY) {
@@ -30,6 +30,28 @@ serve(async (req) => {
         date: targetDay.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })
       };
     };
+
+    const getWeatherCondition = (code: number): string => {
+      const conditions: { [key: number]: string } = {
+        0: "Ясно", 1: "Ясно", 2: "Облачно", 3: "Облачно",
+        45: "Туман", 51: "Морось", 61: "Дождь", 71: "Снег", 95: "Гроза"
+      };
+      return conditions[code] || "Переменная облачность";
+    };
+
+    // Формируем прогноз погоды на неделю
+    let weatherInfo = '\n\nПрогноз погоды на неделю для Санкт-Петербурга:\n';
+    if (weatherForecast?.daily) {
+      for (let i = 0; i < 7; i++) {
+        const dayInfo = getDayInfo(i);
+        const tempMax = Math.round(weatherForecast.daily.temperature_2m_max[i]);
+        const tempMin = Math.round(weatherForecast.daily.temperature_2m_min[i]);
+        const condition = getWeatherCondition(weatherForecast.daily.weathercode[i]);
+        weatherInfo += `${dayInfo.day} (${dayInfo.date}): ${tempMin}°C...${tempMax}°C, ${condition}\n`;
+      }
+    } else {
+      weatherInfo = '\n\nПрогноз погоды недоступен. Создай универсальные рекомендации для осенней погоды.';
+    }
 
     let wardrobeInfo = '';
     if (wardrobe && wardrobe.length > 0) {
@@ -55,10 +77,9 @@ serve(async (req) => {
 
     const prompt = `Создай 7 персональных образов на каждый день недели, начиная с сегодняшнего дня (${getDayInfo(0).day}, ${getDayInfo(0).date}).
     
-Локация: Санкт-Петербург, Россия
-Текущая погода: ${weather.temp}°C, ${weather.condition}${profileInfo}${wardrobeInfo}
+Локация: Санкт-Петербург, Россия${weatherInfo}${profileInfo}${wardrobeInfo}
 
-Для каждого дня создай уникальный образ. Верни ответ СТРОГО в формате JSON массива:
+Для каждого дня создай уникальный образ с учетом прогноза погоды на этот конкретный день. Верни ответ СТРОГО в формате JSON массива:
 [
   {
     "day": "День недели",
@@ -71,7 +92,7 @@ serve(async (req) => {
 
 Важно:
 - Используй ТОЛЬКО вещи из гардероба пользователя (если гардероб не пуст)
-- Учитывай погоду при выборе одежды
+- Учитывай КОНКРЕТНУЮ погоду для каждого дня из прогноза выше
 - Создай разнообразные образы
 - Каждый совет должен быть уникальным и полезным
 - Дни начинаются с ${getDayInfo(0).day}`;

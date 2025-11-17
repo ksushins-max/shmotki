@@ -62,36 +62,36 @@ const Index = () => {
 
         <section className="grid md:grid-cols-3 gap-6 mb-16">
           <Link to="/wardrobe">
-            <Card className="p-8 shadow-soft hover:shadow-elegant transition-smooth cursor-pointer hover:scale-105">
+            <Card className="p-8 shadow-soft hover:shadow-elegant transition-smooth cursor-pointer hover:scale-105 flex flex-col min-h-[240px]">
               <div className="h-12 w-12 rounded-xl gradient-primary flex items-center justify-center mb-4">
                 <Shirt className="h-6 w-6 text-white" />
               </div>
               <h3 className="text-xl font-semibold mb-3">Оцифруйте гардероб</h3>
-              <p className="text-muted-foreground">
+              <p className="text-muted-foreground flex-1">
                 Добавьте свои вещи в приложение и получите полный контроль над вашим гардеробом
               </p>
             </Card>
           </Link>
 
           <Link to="/recommendations">
-            <Card className="p-8 shadow-soft hover:shadow-elegant transition-smooth cursor-pointer hover:scale-105">
+            <Card className="p-8 shadow-soft hover:shadow-elegant transition-smooth cursor-pointer hover:scale-105 flex flex-col min-h-[240px]">
               <div className="h-12 w-12 rounded-xl gradient-accent flex items-center justify-center mb-4">
                 <Sparkles className="h-6 w-6 text-white" />
               </div>
               <h3 className="text-xl font-semibold mb-3">AI рекомендации</h3>
-              <p className="text-muted-foreground">
+              <p className="text-muted-foreground flex-1">
                 Получайте персональные образы на каждый день с учетом погоды и актуальных трендов
               </p>
             </Card>
           </Link>
 
           <Link to="/chat">
-            <Card className="p-8 shadow-soft hover:shadow-elegant transition-smooth cursor-pointer hover:scale-105">
+            <Card className="p-8 shadow-soft hover:shadow-elegant transition-smooth cursor-pointer hover:scale-105 flex flex-col min-h-[240px]">
               <div className="h-12 w-12 rounded-xl gradient-accent flex items-center justify-center mb-4">
                 <MessageCircle className="h-6 w-6 text-white" />
               </div>
               <h3 className="text-xl font-semibold mb-3">Чат с AI</h3>
-              <p className="text-muted-foreground">
+              <p className="text-muted-foreground flex-1">
                 Общайтесь с AI ассистентом и получайте индивидуальные советы по стилю
               </p>
             </Card>

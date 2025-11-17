@@ -33,7 +33,6 @@ const Recommendations = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    fetchWeather();
     fetchUserProfile();
     generateRecommendations();
   }, []);
@@ -67,16 +66,10 @@ const Recommendations = () => {
       );
       const data = await response.json();
       
-      setWeather({
-        temp: Math.round(data.current.temperature_2m),
-        condition: getWeatherCondition(data.current.weathercode)
-      });
+      return data;
     } catch (error) {
       console.error("Error fetching weather:", error);
-      setWeather({
-        temp: 15,
-        condition: "Переменная облачность"
-      });
+      return null;
     }
   };
 
@@ -106,10 +99,12 @@ const Recommendations = () => {
         .select("*")
         .eq("user_id", user.id);
 
+      const weatherData = await fetchWeather();
+
       const { data, error } = await supabase.functions.invoke("generate-weekly-recommendations", {
         body: { 
           wardrobe: wardrobe || [],
-          weather: weather || { temp: 15, condition: "Переменная облачность" },
+          weatherForecast: weatherData,
           userProfile: userProfile
         },
       });
@@ -117,6 +112,13 @@ const Recommendations = () => {
       if (error) throw error;
 
       setRecommendations(data.recommendations);
+      
+      if (weatherData) {
+        setWeather({
+          temp: Math.round(weatherData.current.temperature_2m),
+          condition: getWeatherCondition(weatherData.current.weathercode)
+        });
+      }
     } catch (error) {
       console.error("Error:", error);
       toast({

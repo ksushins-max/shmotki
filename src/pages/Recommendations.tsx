@@ -76,9 +76,21 @@ const Recommendations = () => {
   const getWeatherCondition = (code: number): string => {
     const conditions: { [key: number]: string } = {
       0: "Ясно", 1: "Ясно", 2: "Облачно", 3: "Облачно",
-      45: "Туман", 51: "Морось", 61: "Дождь", 71: "Снег", 95: "Гроза"
+      45: "Туман", 51: "Морось", 53: "Морось", 61: "Дождь", 63: "Дождь", 65: "Дождь",
+      71: "Снег", 73: "Снег", 75: "Снег", 95: "Гроза"
     };
     return conditions[code] || "Переменная облачность";
+  };
+
+  const getWeatherEmoji = (weatherString: string): string => {
+    const lower = weatherString.toLowerCase();
+    if (lower.includes('ясно') || lower.includes('солнечно')) return '☀️';
+    if (lower.includes('облачно')) return '☁️';
+    if (lower.includes('морось') || lower.includes('дождь')) return '🌧️';
+    if (lower.includes('снег')) return '❄️';
+    if (lower.includes('гроза')) return '⛈️';
+    if (lower.includes('туман')) return '🌫️';
+    return '☁️';
   };
 
   const generateRecommendations = async () => {
@@ -201,7 +213,7 @@ const Recommendations = () => {
                     <p className="text-sm text-muted-foreground">{rec.date}</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-2xl font-bold">{rec.weather}</p>
+                    <p className="text-2xl font-bold">{getWeatherEmoji(rec.weather)} {rec.weather}</p>
                   </div>
                 </div>
                 

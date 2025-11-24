@@ -20,6 +20,7 @@ const AddClothingDialog = ({ open, onOpenChange, onItemAdded }: AddClothingDialo
   const [color, setColor] = useState("");
   const [season, setSeason] = useState("");
   const [description, setDescription] = useState("");
+  const [imageFile, setImageFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
@@ -39,12 +40,41 @@ const AddClothingDialog = ({ open, onOpenChange, onItemAdded }: AddClothingDialo
       return;
     }
 
+    let imageUrl = null;
+
+    // Upload image if provided
+    if (imageFile) {
+      const fileExt = imageFile.name.split('.').pop();
+      const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+      
+      const { error: uploadError, data } = await supabase.storage
+        .from('clothing-images')
+        .upload(fileName, imageFile);
+
+      if (uploadError) {
+        toast({
+          title: "Ошибка",
+          description: "Не удалось загрузить изображение",
+          variant: "destructive",
+        });
+        setLoading(false);
+        return;
+      }
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('clothing-images')
+        .getPublicUrl(fileName);
+      
+      imageUrl = publicUrl;
+    }
+
     const { error } = await supabase.from("clothing_items").insert([{
       name,
       category,
       color,
       season,
       description,
+      image_url: imageUrl,
       user_id: user.id,
     }]);
 
@@ -66,6 +96,7 @@ const AddClothingDialog = ({ open, onOpenChange, onItemAdded }: AddClothingDialo
       setColor("");
       setSeason("");
       setDescription("");
+      setImageFile(null);
       onOpenChange(false);
       onItemAdded?.();
     }
@@ -141,6 +172,16 @@ const AddClothingDialog = ({ open, onOpenChange, onItemAdded }: AddClothingDialo
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={3}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="image">Фото вещи</Label>
+            <Input
+              id="image"
+              type="file"
+              accept="image/*"
+              onChange={(e) => setImageFile(e.target.files?.[0] || null)}
             />
           </div>
 

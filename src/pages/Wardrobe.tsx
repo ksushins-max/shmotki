@@ -1,139 +1,34 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Plus } from "lucide-react";
+import { Plus, RefreshCw } from "lucide-react";
 import AddClothingDialog from "@/components/AddClothingDialog";
 import ClothingCard from "@/components/ClothingCard";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
-
-interface ClothingItem {
-  id: string;
-  name: string;
-  category: string;
-  color: string;
-  season: string;
-  description?: string;
-  image_url?: string;
-}
+import { useWardrobeItems } from "@/hooks/useWardrobeItems";
 
 const Wardrobe = () => {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [clothingItems, setClothingItems] = useState<ClothingItem[]>([]);
   const [user, setUser] = useState<any>(null);
-  const { toast } = useToast();
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
-      if (session?.user) {
-        fetchClothingItems();
-      }
     });
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
-      if (session?.user) {
-        fetchClothingItems();
-      } else {
-        setClothingItems([]);
-      }
     });
 
     return () => subscription.unsubscribe();
   }, []);
 
-  const fetchClothingItems = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-
-    const { data, error } = await supabase
-      .from("clothing_items")
-      .select("*")
-      .eq("user_id", user.id)
-      .order("created_at", { ascending: false });
-
-    if (error) {
-      toast({
-        title: "Ошибка загрузки",
-        description: "Не удалось загрузить вещи из гардероба",
-        variant: "destructive",
-      });
-    } else {
-      setClothingItems(data || []);
-      
-      // Auto-populate with sample data if wardrobe is empty
-      if (data && data.length === 0) {
-        await addSampleData(user.id);
-      }
-    }
-  };
-
-  const addSampleData = async (userId: string) => {
-    const sampleItems = [
-      { name: 'Белая базовая футболка', category: 'tops', color: 'Белый', season: 'summer', description: 'Классическая белая футболка из хлопка' },
-      { name: 'Черная футболка', category: 'tops', color: 'Черный', season: 'all', description: 'Универсальная черная футболка' },
-      { name: 'Синие джинсы', category: 'bottoms', color: 'Синий', season: 'all', description: 'Классические прямые джинсы' },
-      { name: 'Черные брюки', category: 'bottoms', color: 'Черный', season: 'all', description: 'Строгие черные брюки' },
-      { name: 'Серая толстовка', category: 'tops', color: 'Серый', season: 'autumn', description: 'Теплая толстовка с капюшоном' },
-      { name: 'Клетчатая рубашка', category: 'tops', color: 'Синий', season: 'spring', description: 'Рубашка в синюю клетку' },
-      { name: 'Черная кожаная куртка', category: 'outerwear', color: 'Черный', season: 'autumn', description: 'Стильная кожаная куртка' },
-      { name: 'Бежевый тренч', category: 'outerwear', color: 'Бежевый', season: 'spring', description: 'Классический тренч' },
-      { name: 'Белые кроссовки', category: 'shoes', color: 'Белый', season: 'all', description: 'Универсальные белые кроссовки' },
-      { name: 'Черные ботинки', category: 'shoes', color: 'Черный', season: 'autumn', description: 'Классические черные ботинки' },
-      { name: 'Синее платье', category: 'dresses', color: 'Синий', season: 'summer', description: 'Легкое летнее платье' },
-      { name: 'Кожаный ремень', category: 'accessories', color: 'Коричневый', season: 'all', description: 'Классический кожаный ремень' },
-      { name: 'Зимняя куртка', category: 'outerwear', color: 'Черный', season: 'winter', description: 'Теплая зимняя куртка' },
-      { name: 'Свитер', category: 'tops', color: 'Бежевый', season: 'winter', description: 'Теплый вязаный свитер' },
-    ];
-
-    const itemsWithUserId = sampleItems.map(item => ({ ...item, user_id: userId }));
-    
-    const { error } = await supabase.from("clothing_items").insert(itemsWithUserId);
-    
-    if (error) {
-      console.error("Error adding sample data:", error);
-    } else {
-      toast({
-        title: "Гардероб заполнен!",
-        description: "Добавлены тестовые вещи для демонстрации функционала",
-      });
-      
-      const { data } = await supabase
-        .from("clothing_items")
-        .select("*")
-        .eq("user_id", userId)
-        .order("created_at", { ascending: false });
-      
-      setClothingItems(data || []);
-    }
-  };
+  const { items, isLoading, deleteItem, refresh } = useWardrobeItems(user?.id);
 
   const handleItemAdded = () => {
-    fetchClothingItems();
-  };
-
-  const handleDeleteItem = async (id: string) => {
-    const { error } = await supabase
-      .from("clothing_items")
-      .delete()
-      .eq("id", id);
-
-    if (error) {
-      toast({
-        title: "Ошибка",
-        description: "Не удалось удалить вещь",
-        variant: "destructive",
-      });
-    } else {
-      toast({
-        title: "Удалено",
-        description: "Вещь успешно удалена из гардероба",
-      });
-      fetchClothingItems();
-    }
+    refresh();
   };
 
   if (!user) {
@@ -163,42 +58,60 @@ const Wardrobe = () => {
               Управляйте своими вещами и создавайте коллекции
             </p>
           </div>
-          <Button
-            onClick={() => setIsAddDialogOpen(true)}
-            className="gradient-accent shadow-elegant hover:scale-105 transition-smooth"
-            size="lg"
-          >
-            <Plus className="mr-2 h-5 w-5" />
-            Добавить вещь
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              onClick={refresh}
+              variant="outline"
+              size="lg"
+              className="hover:scale-105 transition-smooth"
+            >
+              <RefreshCw className="h-5 w-5" />
+            </Button>
+            <Button
+              onClick={() => setIsAddDialogOpen(true)}
+              className="gradient-accent shadow-elegant hover:scale-105 transition-smooth"
+              size="lg"
+            >
+              <Plus className="mr-2 h-5 w-5" />
+              Добавить вещь
+            </Button>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {clothingItems.length === 0 ? (
-            <Card
-              className="border-2 border-dashed border-border hover:border-primary transition-smooth flex items-center justify-center min-h-[280px] cursor-pointer"
-              onClick={() => setIsAddDialogOpen(true)}
-            >
-              <div className="text-center p-8">
-                <Plus className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                <p className="text-muted-foreground">Добавьте первую вещь</p>
-              </div>
-            </Card>
-          ) : (
-            clothingItems.map((item) => (
-              <ClothingCard
-                key={item.id}
-                id={item.id}
-                name={item.name}
-                category={item.category}
-                color={item.color}
-                season={item.season}
-                imageUrl={item.image_url}
-                onDelete={handleDeleteItem}
-              />
-            ))
-          )}
-        </div>
+        {isLoading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {[...Array(4)].map((_, i) => (
+              <Card key={i} className="min-h-[280px] animate-pulse bg-muted" />
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {items.length === 0 ? (
+              <Card
+                className="border-2 border-dashed border-border hover:border-primary transition-smooth flex items-center justify-center min-h-[280px] cursor-pointer"
+                onClick={() => setIsAddDialogOpen(true)}
+              >
+                <div className="text-center p-8">
+                  <Plus className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                  <p className="text-muted-foreground">Добавьте первую вещь</p>
+                </div>
+              </Card>
+            ) : (
+              items.map((item) => (
+                <ClothingCard
+                  key={item.id}
+                  id={item.id}
+                  name={item.name}
+                  category={item.category}
+                  color={item.color}
+                  season={item.season}
+                  imageUrl={item.image_url}
+                  onDelete={deleteItem}
+                />
+              ))
+            )}
+          </div>
+        )}
 
         <AddClothingDialog
           open={isAddDialogOpen}

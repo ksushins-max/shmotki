@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -14,15 +15,25 @@ interface ClothingCardProps {
 }
 
 const ClothingCard = ({ id, name, category, color, season, imageUrl, onDelete }: ClothingCardProps) => {
+  const [imageError, setImageError] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState(false);
+
   return (
     <Card className="overflow-hidden hover:shadow-elegant transition-smooth group relative">
-      <div className="aspect-square bg-muted flex items-center justify-center group-hover:scale-105 transition-smooth overflow-hidden">
-        {imageUrl ? (
-          <img 
-            src={imageUrl} 
-            alt={name}
-            className="w-full h-full object-cover"
-          />
+      <div className="aspect-square bg-muted flex items-center justify-center group-hover:scale-105 transition-smooth overflow-hidden relative">
+        {imageUrl && !imageError ? (
+          <>
+            {!imageLoaded && (
+              <div className="absolute inset-0 bg-muted animate-pulse" />
+            )}
+            <img 
+              src={imageUrl} 
+              alt={name}
+              className={`w-full h-full object-cover transition-opacity duration-300 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
+              onLoad={() => setImageLoaded(true)}
+              onError={() => setImageError(true)}
+            />
+          </>
         ) : (
           <Shirt className="h-20 w-20 text-muted-foreground" />
         )}

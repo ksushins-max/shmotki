@@ -1,11 +1,47 @@
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Link } from "react-router-dom";
-import { Shirt, Sparkles, TrendingUp, ArrowRight, MessageCircle } from "lucide-react";
+import { Shirt, Sparkles, TrendingUp, ArrowRight, MessageCircle, Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import wardrobeHero from "@/assets/wardrobe-hero.jpg";
 import styleAnalysis from "@/assets/style-analysis.jpg";
 
+const fashionTrends = [
+  { title: "Оверсайз силуэты", description: "Свободные формы остаются в тренде" },
+  { title: "Нейтральные тона", description: "Бежевый, серый и белый — база сезона" },
+  { title: "Многослойность", description: "Комбинируйте разные текстуры" },
+  { title: "Минимализм", description: "Чистые линии и простые формы" },
+];
+
 const Index = () => {
+  const [trends, setTrends] = useState<string | null>(null);
+  const [loadingTrends, setLoadingTrends] = useState(true);
+
+  useEffect(() => {
+    fetchTrends();
+  }, []);
+
+  const fetchTrends = async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke('ai-chat', {
+        body: {
+          message: "Кратко опиши 4-5 актуальных модных тренда на текущий сезон. Ответ дай в формате списка, каждый тренд одним предложением.",
+          wardrobeItems: [],
+          weatherInfo: null,
+          userProfile: null
+        }
+      });
+
+      if (error) throw error;
+      setTrends(data.response);
+    } catch (error) {
+      console.error("Error fetching trends:", error);
+      setTrends(null);
+    } finally {
+      setLoadingTrends(false);
+    }
+  };
   return (
     <div className="min-h-screen gradient-soft">
       <div className="container px-4 py-16 max-w-7xl mx-auto">
@@ -36,6 +72,35 @@ const Index = () => {
               </Button>
             </Link>
           </div>
+        </section>
+
+        <section className="mb-16">
+          <Card className="p-8 shadow-elegant">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="h-12 w-12 rounded-xl gradient-primary flex items-center justify-center">
+                <TrendingUp className="h-6 w-6 text-white" />
+              </div>
+              <h2 className="text-2xl font-bold">Модные тренды сезона</h2>
+            </div>
+            {loadingTrends ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin text-primary" />
+              </div>
+            ) : trends ? (
+              <div className="prose prose-sm max-w-none text-muted-foreground whitespace-pre-line">
+                {trends}
+              </div>
+            ) : (
+              <div className="grid sm:grid-cols-2 gap-4">
+                {fashionTrends.map((trend, index) => (
+                  <div key={index} className="p-4 rounded-lg bg-muted/50">
+                    <h4 className="font-semibold mb-1">{trend.title}</h4>
+                    <p className="text-sm text-muted-foreground">{trend.description}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </Card>
         </section>
 
         <div className="grid md:grid-cols-2 gap-8 mb-16">

@@ -16,6 +16,7 @@ const Profile = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [user, setUser] = useState<any>(null);
+  const [profileId, setProfileId] = useState<string | null>(null);
   const [profile, setProfile] = useState({
     gender: "",
     age: "",
@@ -47,6 +48,7 @@ const Profile = () => {
       if (error) throw error;
 
       if (data) {
+        setProfileId(data.id);
         setProfile({
           gender: data.gender || "",
           age: data.age?.toString() || "",
@@ -67,12 +69,12 @@ const Profile = () => {
     try {
       const { error } = await supabase
         .from("profiles")
-        .upsert({
-          user_id: user.id,
+        .update({
           gender: profile.gender || null,
           age: profile.age ? parseInt(profile.age) : null,
           occupation: profile.occupation || null,
-        });
+        })
+        .eq("user_id", user.id);
 
       if (error) throw error;
 

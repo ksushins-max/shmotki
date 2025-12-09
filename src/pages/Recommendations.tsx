@@ -23,6 +23,7 @@ interface DayRecommendation {
   weather: string;
   outfit: string[];
   tip: string;
+  shoppingLinks?: { name: string; url: string; brand: string }[];
 }
 
 const Recommendations = () => {
@@ -228,6 +229,25 @@ const Recommendations = () => {
                     ))}
                   </ul>
                 </div>
+
+                {rec.shoppingLinks && rec.shoppingLinks.length > 0 && (
+                  <div className="mb-4">
+                    <h4 className="font-semibold mb-2">🛒 Рекомендуем к покупке:</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {rec.shoppingLinks.map((link, idx) => (
+                        <a
+                          key={idx}
+                          href={link.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center px-3 py-1.5 rounded-full bg-primary/10 text-primary text-sm hover:bg-primary/20 transition-colors"
+                        >
+                          {link.brand}: {link.name} →
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 <div className="bg-muted/50 rounded-lg p-4">
                   <p className="text-sm font-medium mb-1">💡 Совет стилиста:</p>

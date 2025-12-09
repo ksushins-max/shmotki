@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
@@ -21,7 +23,16 @@ const Profile = () => {
     gender: "",
     age: "",
     occupation: "",
+    favorite_brands: [] as string[],
   });
+
+const popularBrands = [
+  "Zara", "H&M", "Uniqlo", "Massimo Dutti", "COS", "Mango", "Reserved", 
+  "12 Storeez", "Befree", "Love Republic", "Sela", "Gloria Jeans",
+  "Nike", "Adidas", "New Balance", "Puma", "Reebok", "Converse",
+  "Levi's", "Tommy Hilfiger", "Calvin Klein", "Lacoste", "Guess",
+  "Pull&Bear", "Bershka", "Stradivarius", "ASOS", "Monki"
+];
 
   useEffect(() => {
     checkUser();
@@ -53,6 +64,7 @@ const Profile = () => {
           gender: data.gender || "",
           age: data.age?.toString() || "",
           occupation: data.occupation || "",
+          favorite_brands: data.favorite_brands || [],
         });
       }
     } catch (error) {
@@ -73,6 +85,7 @@ const Profile = () => {
           gender: profile.gender || null,
           age: profile.age ? parseInt(profile.age) : null,
           occupation: profile.occupation || null,
+          favorite_brands: profile.favorite_brands,
         })
         .eq("user_id", user.id);
 
@@ -152,6 +165,45 @@ const Profile = () => {
                 onChange={(e) => setProfile({ ...profile, occupation: e.target.value })}
                 placeholder="Например: IT, Образование, Медицина"
               />
+            </div>
+
+            <div className="space-y-3">
+              <Label>Любимые бренды</Label>
+              {profile.favorite_brands.length > 0 && (
+                <div className="flex flex-wrap gap-2 mb-2">
+                  {profile.favorite_brands.map((brand) => (
+                    <Badge 
+                      key={brand} 
+                      variant="secondary" 
+                      className="cursor-pointer hover:bg-destructive hover:text-destructive-foreground"
+                      onClick={() => setProfile({
+                        ...profile,
+                        favorite_brands: profile.favorite_brands.filter(b => b !== brand)
+                      })}
+                    >
+                      {brand} ✕
+                    </Badge>
+                  ))}
+                </div>
+              )}
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-48 overflow-y-auto p-2 border rounded-md">
+                {popularBrands.map((brand) => (
+                  <div key={brand} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={brand}
+                      checked={profile.favorite_brands.includes(brand)}
+                      onCheckedChange={(checked) => {
+                        if (checked) {
+                          setProfile({ ...profile, favorite_brands: [...profile.favorite_brands, brand] });
+                        } else {
+                          setProfile({ ...profile, favorite_brands: profile.favorite_brands.filter(b => b !== brand) });
+                        }
+                      }}
+                    />
+                    <label htmlFor={brand} className="text-sm cursor-pointer">{brand}</label>
+                  </div>
+                ))}
+              </div>
             </div>
 
             <Button onClick={handleSave} disabled={saving} className="w-full">

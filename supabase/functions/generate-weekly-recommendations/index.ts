@@ -64,20 +64,40 @@ serve(async (req) => {
     }
 
     let profileInfo = '';
+    let favoriteBrands: string[] = [];
     if (userProfile) {
       const details = [];
       if (userProfile.gender) details.push(`пол: ${userProfile.gender === 'male' ? 'мужской' : userProfile.gender === 'female' ? 'женский' : 'другое'}`);
       if (userProfile.age) details.push(`возраст: ${userProfile.age}`);
       if (userProfile.occupation) details.push(`сфера: ${userProfile.occupation}`);
+      if (userProfile.favorite_brands && userProfile.favorite_brands.length > 0) {
+        favoriteBrands = userProfile.favorite_brands;
+        details.push(`любимые бренды: ${userProfile.favorite_brands.join(', ')}`);
+      }
       
       if (details.length > 0) {
         profileInfo = `\n\nПрофиль: ${details.join(', ')}`;
       }
     }
 
+    const brandsInfo = favoriteBrands.length > 0 
+      ? `\n\nЕсли в гардеробе не хватает вещей, добавь в shoppingLinks ссылки на конкретные товары из этих брендов: ${favoriteBrands.join(', ')}.
+      Используй реальные ссылки на официальные сайты:
+      - Zara: https://www.zara.com/ru/
+      - H&M: https://www2.hm.com/ru_ru/
+      - Uniqlo: https://www.uniqlo.com/ru/
+      - Massimo Dutti: https://www.massimodutti.com/ru/
+      - Nike: https://www.nike.com/ru/
+      - Adidas: https://www.adidas.ru/
+      - 12 Storeez: https://12storeez.com/
+      - Befree: https://befree.ru/
+      - Mango: https://shop.mango.com/ru/
+      - COS: https://www.cos.com/ru/`
+      : '';
+
     const prompt = `Создай 7 персональных образов на каждый день недели, начиная с сегодняшнего дня (${getDayInfo(0).day}, ${getDayInfo(0).date}).
     
-Локация: Санкт-Петербург, Россия${weatherInfo}${profileInfo}${wardrobeInfo}
+Локация: Санкт-Петербург, Россия${weatherInfo}${profileInfo}${wardrobeInfo}${brandsInfo}
 
 Для каждого дня создай уникальный образ с учетом прогноза погоды на этот конкретный день. Верни ответ СТРОГО в формате JSON массива:
 [
@@ -86,7 +106,8 @@ serve(async (req) => {
     "date": "Дата",
     "weather": "☀️ Температура°C, условие",
     "outfit": ["вещь 1", "вещь 2", "вещь 3"],
-    "tip": "Совет стилиста"
+    "tip": "Совет стилиста",
+    "shoppingLinks": [{"name": "название товара", "url": "ссылка", "brand": "бренд"}]
   }
 ]
 
@@ -95,7 +116,8 @@ serve(async (req) => {
 - Учитывай КОНКРЕТНУЮ погоду для каждого дня из прогноза выше
 - Создай разнообразные образы
 - Каждый совет должен быть уникальным и полезным
-- Дни начинаются с ${getDayInfo(0).day}`;
+- Дни начинаются с ${getDayInfo(0).day}
+- shoppingLinks добавляй только если у пользователя есть любимые бренды и в гардеробе не хватает подходящих вещей`;
 
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',

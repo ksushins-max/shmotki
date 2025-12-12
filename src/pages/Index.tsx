@@ -2,9 +2,10 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import wardrobeHero from "@/assets/wardrobe-hero.jpg";
-import styleAnalysis from "@/assets/style-analysis.jpg";
-import aiAssistant from "@/assets/ai-assistant.jpg";
+import featureWardrobe from "@/assets/feature-wardrobe.jpg";
+import featureAiStylist from "@/assets/feature-ai-stylist.jpg";
+import featureAnalysis from "@/assets/feature-analysis.jpg";
+import featureChat from "@/assets/feature-chat.jpg";
 
 const fashionTrends = [
   { title: "Оверсайз силуэты", description: "Свободные формы остаются в тренде" },
@@ -253,7 +254,7 @@ const Index = () => {
             <Link to="/wardrobe" className="group">
               <div className="relative aspect-[3/4] overflow-hidden bg-card">
                 <img 
-                  src={wardrobeHero} 
+                  src={featureWardrobe} 
                   alt="Гардероб" 
                   className="w-full h-full object-cover group-hover:scale-105 transition-all duration-700"
                 />
@@ -269,7 +270,7 @@ const Index = () => {
             <Link to="/recommendations" className="group">
               <div className="relative aspect-[3/4] overflow-hidden bg-card">
                 <img 
-                  src={styleAnalysis} 
+                  src={featureAiStylist} 
                   alt="AI рекомендации" 
                   className="w-full h-full object-cover group-hover:scale-105 transition-all duration-700"
                 />
@@ -283,10 +284,17 @@ const Index = () => {
 
             {/* Analysis */}
             <Link to="/analysis" className="group">
-              <div className="relative aspect-[3/4] overflow-hidden bg-foreground flex flex-col justify-end p-4">
-                <span className="text-[10px] uppercase tracking-wider text-background/70 font-display">03</span>
-                <h3 className="font-display text-xl font-bold uppercase text-background">Анализ</h3>
-                <p className="text-xs text-background/70 font-body mt-2">Узнайте, каких вещей не хватает</p>
+              <div className="relative aspect-[3/4] overflow-hidden bg-card">
+                <img 
+                  src={featureAnalysis} 
+                  alt="Анализ гардероба" 
+                  className="w-full h-full object-cover group-hover:scale-105 transition-all duration-700"
+                />
+                <div className="absolute inset-0 bg-foreground/30 group-hover:bg-foreground/10 transition-smooth" />
+                <div className="absolute bottom-0 left-0 right-0 p-4 text-background">
+                  <span className="text-[10px] uppercase tracking-wider opacity-70 font-display">03</span>
+                  <h3 className="font-display text-xl font-bold uppercase">Анализ</h3>
+                </div>
               </div>
             </Link>
 
@@ -294,7 +302,7 @@ const Index = () => {
             <Link to="/chat" className="group">
               <div className="relative aspect-[3/4] overflow-hidden bg-card">
                 <img 
-                  src={aiAssistant} 
+                  src={featureChat} 
                   alt="AI чат" 
                   className="w-full h-full object-cover group-hover:scale-105 transition-all duration-700"
                 />

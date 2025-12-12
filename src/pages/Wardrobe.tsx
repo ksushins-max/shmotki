@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Plus, RefreshCw } from "lucide-react";
 import AddClothingDialog from "@/components/AddClothingDialog";
 import ClothingCard from "@/components/ClothingCard";
@@ -10,6 +9,7 @@ import { useWardrobeItems } from "@/hooks/useWardrobeItems";
 const Wardrobe = () => {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [user, setUser] = useState<any>(null);
+  const [filter, setFilter] = useState<string>("all");
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -31,73 +31,99 @@ const Wardrobe = () => {
     refresh();
   };
 
+  const categories = ["all", ...new Set(items.map(item => item.category))];
+  const filteredItems = filter === "all" ? items : items.filter(item => item.category === filter);
+
   if (!user) {
     return (
-      <div className="min-h-screen gradient-soft flex items-center justify-center">
-        <Card className="p-8 max-w-md mx-4 shadow-elegant">
-          <h2 className="text-2xl font-bold mb-4 text-center">
-            Войдите, чтобы управлять гардеробом
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center p-8 max-w-md">
+          <h2 className="font-display text-3xl font-bold uppercase mb-4">
+            Войдите в систему
           </h2>
-          <p className="text-muted-foreground text-center">
+          <p className="text-muted-foreground font-body">
             Создайте аккаунт или войдите, чтобы начать добавлять вещи в свой гардероб
           </p>
-        </Card>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen gradient-soft">
-      <div className="container py-8 px-4 max-w-7xl mx-auto">
-        <div className="flex items-center justify-between mb-8">
+    <div className="min-h-screen bg-background">
+      <div className="container max-w-7xl mx-auto px-6 py-12">
+        {/* Header */}
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
           <div>
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-              Мой гардероб
+            <span className="text-accent font-display text-sm font-semibold uppercase tracking-wider">Collection</span>
+            <h1 className="font-display text-5xl md:text-7xl font-bold uppercase tracking-tight mt-2">
+              Гардероб
             </h1>
-            <p className="text-muted-foreground mt-2">
-              Управляйте своими вещами и создавайте коллекции
-            </p>
           </div>
-          <div className="flex gap-2">
+          
+          <div className="flex items-center gap-3">
             <Button
               onClick={refresh}
               variant="outline"
-              size="lg"
-              className="hover:scale-105 transition-smooth"
+              size="icon"
+              className="border-border hover:bg-secondary"
             >
-              <RefreshCw className="h-5 w-5" />
+              <RefreshCw className="h-4 w-4" />
             </Button>
             <Button
               onClick={() => setIsAddDialogOpen(true)}
-              className="gradient-accent shadow-elegant hover:scale-105 transition-smooth"
-              size="lg"
+              className="bg-foreground text-background hover:bg-foreground/90 font-display text-sm font-semibold uppercase tracking-wider px-6"
             >
-              <Plus className="mr-2 h-5 w-5" />
-              Добавить вещь
+              <Plus className="mr-2 h-4 w-4" />
+              Добавить
             </Button>
           </div>
         </div>
 
+        {/* Category filter */}
+        <div className="flex items-center gap-6 mb-8 border-b border-border pb-4">
+          <span className="text-xs uppercase tracking-wider text-muted-foreground font-display">Категория</span>
+          <div className="flex gap-4">
+            {categories.map((cat) => (
+              <button
+                key={cat}
+                onClick={() => setFilter(cat)}
+                className={`text-sm font-display font-medium uppercase tracking-wider transition-smooth ${
+                  filter === cat 
+                    ? "text-accent" 
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {cat === "all" ? "Все" : cat}
+              </button>
+            ))}
+          </div>
+          <span className="ml-auto text-xs text-muted-foreground font-body">
+            [{filteredItems.length}]
+          </span>
+        </div>
+
+        {/* Grid */}
         {isLoading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {[...Array(4)].map((_, i) => (
-              <Card key={i} className="min-h-[280px] animate-pulse bg-muted" />
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {[...Array(8)].map((_, i) => (
+              <div key={i} className="aspect-[3/4] bg-secondary animate-pulse" />
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {items.length === 0 ? (
-              <Card
-                className="border-2 border-dashed border-border hover:border-primary transition-smooth flex items-center justify-center min-h-[280px] cursor-pointer"
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {filteredItems.length === 0 ? (
+              <div
+                className="aspect-[3/4] border-2 border-dashed border-border hover:border-accent transition-smooth flex items-center justify-center cursor-pointer col-span-2 md:col-span-1"
                 onClick={() => setIsAddDialogOpen(true)}
               >
-                <div className="text-center p-8">
-                  <Plus className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                  <p className="text-muted-foreground">Добавьте первую вещь</p>
+                <div className="text-center p-6">
+                  <Plus className="h-8 w-8 mx-auto mb-3 text-muted-foreground" />
+                  <p className="text-sm text-muted-foreground font-display uppercase tracking-wider">Добавить вещь</p>
                 </div>
-              </Card>
+              </div>
             ) : (
-              items.map((item) => (
+              filteredItems.map((item, index) => (
                 <ClothingCard
                   key={item.id}
                   id={item.id}
@@ -107,6 +133,7 @@ const Wardrobe = () => {
                   season={item.season}
                   imageUrl={item.image_url}
                   onDelete={deleteItem}
+                  index={index}
                 />
               ))
             )}

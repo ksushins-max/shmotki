@@ -13,16 +13,68 @@ const fashionTrends = [
   { title: "Минимализм", description: "Чистые линии и простые формы" },
 ];
 
+// Sample clothing items for the typing animation
+const clothingItems = [
+  { id: 1, emoji: "👕", label: "футболка" },
+  { id: 2, emoji: "👖", label: "джинсы" },
+  { id: 3, emoji: "👟", label: "кроссовки" },
+];
+
 const Index = () => {
   const [trends, setTrends] = useState<string | null>(null);
   const [loadingTrends, setLoadingTrends] = useState(true);
-  const [isVisible, setIsVisible] = useState(false);
+  const [visibleItems, setVisibleItems] = useState<number[]>([]);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [showCursor, setShowCursor] = useState(true);
 
   useEffect(() => {
     fetchTrends();
-    // Trigger animation after mount
-    const timer = setTimeout(() => setIsVisible(true), 100);
-    return () => clearTimeout(timer);
+  }, []);
+
+  // Typing animation effect
+  useEffect(() => {
+    const typeSpeed = 600;
+    const deleteSpeed = 400;
+    const pauseBeforeDelete = 2000;
+    const pauseBeforeType = 1000;
+
+    let timeout: NodeJS.Timeout;
+
+    if (!isDeleting) {
+      // Typing phase
+      if (visibleItems.length < clothingItems.length) {
+        timeout = setTimeout(() => {
+          setVisibleItems(prev => [...prev, clothingItems[prev.length].id]);
+        }, typeSpeed);
+      } else {
+        // All items typed, pause then start deleting
+        timeout = setTimeout(() => {
+          setIsDeleting(true);
+        }, pauseBeforeDelete);
+      }
+    } else {
+      // Deleting phase
+      if (visibleItems.length > 0) {
+        timeout = setTimeout(() => {
+          setVisibleItems(prev => prev.slice(0, -1));
+        }, deleteSpeed);
+      } else {
+        // All items deleted, pause then start typing again
+        timeout = setTimeout(() => {
+          setIsDeleting(false);
+        }, pauseBeforeType);
+      }
+    }
+
+    return () => clearTimeout(timeout);
+  }, [visibleItems, isDeleting]);
+
+  // Cursor blinking effect
+  useEffect(() => {
+    const cursorInterval = setInterval(() => {
+      setShowCursor(prev => !prev);
+    }, 530);
+    return () => clearInterval(cursorInterval);
   }, []);
 
   const fetchTrends = async () => {
@@ -48,20 +100,13 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Hero Section - Moodboard Style with Animation */}
+      {/* Hero Section with Typing Animation */}
       <section className="relative min-h-[90vh] flex items-center overflow-hidden">
         <div className="container max-w-7xl mx-auto px-6 py-20">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <div 
-              className={`space-y-8 transition-all duration-1000 ease-out ${
-                isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
-              }`}
-            >
+            <div className="space-y-8 animate-fade-in">
               <div className="space-y-6">
-                <p 
-                  className="text-xs uppercase tracking-[0.2em] text-muted-foreground font-body font-medium"
-                  style={{ transitionDelay: "0.1s" }}
-                >
+                <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground font-body font-medium">
                   AI-Powered Fashion
                 </p>
                 <h1 className="font-display text-editorial-xl font-bold uppercase tracking-tight">
@@ -87,95 +132,57 @@ const Index = () => {
               </div>
             </div>
 
-            {/* Moodboard Style Collage with Staggered Animation */}
-            <div className="relative">
-              <div className="relative w-full max-w-lg mx-auto">
-                {/* Background paper layers with animation */}
-                <div 
-                  className={`absolute inset-0 bg-secondary/60 shadow-lg transition-all duration-1000 ease-out ${
-                    isVisible ? "opacity-100 rotate-3 translate-x-2.5 translate-y-1.5" : "opacity-0 rotate-0 translate-x-0 translate-y-0"
-                  }`}
-                  style={{ transitionDelay: "0.3s" }}
-                />
-                <div 
-                  className={`absolute inset-0 bg-secondary/80 shadow-md transition-all duration-1000 ease-out ${
-                    isVisible ? "opacity-100 -rotate-2 -translate-x-1 translate-y-0.5" : "opacity-0 rotate-0 translate-x-0 translate-y-0"
-                  }`}
-                  style={{ transitionDelay: "0.4s" }}
-                />
+            {/* Typing Animation Section */}
+            <div className="relative flex items-center justify-center min-h-[400px]">
+              <div className="relative w-full max-w-md">
+                {/* Background surface */}
+                <div className="absolute inset-0 bg-secondary/30 -rotate-1" />
+                <div className="absolute inset-0 bg-secondary/50 rotate-1" />
                 
-                {/* Main image container */}
-                <div 
-                  className={`relative bg-card shadow-xl p-3 transition-all duration-1000 ease-out ${
-                    isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
-                  }`}
-                  style={{ transitionDelay: "0.5s" }}
-                >
-                  <div className="aspect-[3/4] overflow-hidden">
-                    <img 
-                      src={wardrobeHero} 
-                      alt="Fashion" 
-                      className={`w-full h-full object-cover transition-transform duration-1000 ${
-                        isVisible ? "scale-100" : "scale-110"
-                      }`}
-                      style={{ transitionDelay: "0.7s" }}
+                {/* Main container */}
+                <div className="relative bg-card border border-border p-8 shadow-lg">
+                  <div className="flex items-center justify-center gap-4 min-h-[200px]">
+                    {/* Clothing items that "type" in */}
+                    {clothingItems.map((item, index) => {
+                      const isVisible = visibleItems.includes(item.id);
+                      return (
+                        <div
+                          key={item.id}
+                          className={`
+                            flex flex-col items-center gap-2 transition-all duration-300 ease-out
+                            ${isVisible 
+                              ? "opacity-100 scale-100 translate-y-0" 
+                              : "opacity-0 scale-75 translate-y-4"
+                            }
+                          `}
+                        >
+                          <div className="w-20 h-24 bg-secondary border border-border flex items-center justify-center shadow-sm">
+                            <span className="text-4xl">{item.emoji}</span>
+                          </div>
+                          <span className="text-xs text-muted-foreground font-display uppercase tracking-wider">
+                            {item.label}
+                          </span>
+                        </div>
+                      );
+                    })}
+                    
+                    {/* Typing cursor */}
+                    <div 
+                      className={`
+                        w-0.5 h-24 bg-accent transition-opacity duration-100
+                        ${showCursor ? "opacity-100" : "opacity-0"}
+                      `}
                     />
                   </div>
                   
-                  {/* Handwritten-style labels with staggered animation */}
-                  <div 
-                    className={`absolute -right-4 top-1/4 transform transition-all duration-700 ease-out ${
-                      isVisible ? "opacity-100 rotate-12 translate-x-0" : "opacity-0 rotate-0 translate-x-10"
-                    }`}
-                    style={{ transitionDelay: "0.9s" }}
-                  >
-                    <span className="font-body italic text-sm text-muted-foreground bg-background px-2 py-1 shadow-sm inline-block animate-float">
-                      стиль сезона →
-                    </span>
-                  </div>
-                  
-                  <div 
-                    className={`absolute -left-8 top-1/2 transform transition-all duration-700 ease-out ${
-                      isVisible ? "opacity-100 -rotate-6 translate-x-0" : "opacity-0 rotate-0 -translate-x-10"
-                    }`}
-                    style={{ transitionDelay: "1s" }}
-                  >
-                    <span className="font-body italic text-sm text-muted-foreground bg-background px-2 py-1 shadow-sm inline-block animate-float-delayed">
-                      ваш образ
-                    </span>
-                  </div>
-                  
-                  <div 
-                    className={`absolute -right-6 bottom-1/4 transform transition-all duration-700 ease-out ${
-                      isVisible ? "opacity-100 rotate-6 translate-x-0" : "opacity-0 rotate-0 translate-x-10"
-                    }`}
-                    style={{ transitionDelay: "1.1s" }}
-                  >
-                    <span className="font-body italic text-sm text-muted-foreground bg-background px-2 py-1 shadow-sm inline-block animate-float">
-                      AI подбор →
-                    </span>
-                  </div>
+                  {/* Hint text */}
+                  <p className="text-center text-xs text-muted-foreground font-body mt-6">
+                    Добавляйте вещи в гардероб
+                  </p>
                 </div>
                 
-                {/* Paperclip decoration with animation */}
-                <div 
-                  className={`absolute -top-6 left-1/4 w-8 h-16 border-2 border-muted-foreground/40 rounded-full transition-all duration-700 ease-out ${
-                    isVisible ? "opacity-100 rotate-45" : "opacity-0 rotate-0"
-                  }`}
-                  style={{ 
-                    borderBottomColor: "transparent", 
-                    borderLeftColor: "transparent",
-                    transitionDelay: "1.2s"
-                  }} 
-                />
-                
-                {/* Season badge with animation */}
-                <div 
-                  className={`absolute -bottom-4 -left-4 bg-foreground text-background p-4 shadow-lg transition-all duration-700 ease-out ${
-                    isVisible ? "opacity-100 translate-x-0 translate-y-0" : "opacity-0 -translate-x-10 translate-y-10"
-                  }`}
-                  style={{ transitionDelay: "0.8s" }}
-                >
+                {/* Season badge */}
+                <div className="absolute -bottom-4 -left-4 bg-foreground text-background p-4 shadow-lg">
                   <p className="font-display text-xs uppercase tracking-widest opacity-70">Season</p>
                   <p className="font-display text-2xl font-bold uppercase">24/25</p>
                 </div>

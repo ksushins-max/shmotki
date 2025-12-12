@@ -1,9 +1,8 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send, Bot, User, Trash2 } from "lucide-react";
+import { Send, Bot, User, Trash2, ArrowRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -27,6 +26,13 @@ interface Message {
   role: "user" | "assistant";
   content: string;
 }
+
+const quickPrompts = [
+  "Что надеть сегодня?",
+  "Образ для работы",
+  "Для свидания",
+  "На прогулку",
+];
 
 const Chat = () => {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -60,7 +66,6 @@ const Chat = () => {
         fetchUserProfile(user.id)
       ]);
     } else {
-      // Show welcome message for non-authenticated users
       setMessages([{
         role: "assistant",
         content: "Привет! Я ваш AI стилист. Войдите в систему, чтобы получить персональные рекомендации.",
@@ -85,13 +90,11 @@ const Chat = () => {
           content: msg.content
         })));
       } else {
-        // Add welcome message for new users
         const welcomeMsg = {
           role: "assistant" as const,
           content: "Привет! Я ваш AI стилист. Задайте мне любые вопросы о моде, стиле или рекомендациях по вашему гардеробу."
         };
         setMessages([welcomeMsg]);
-        // Save welcome message to DB
         await saveMessage(uid, welcomeMsg.role, welcomeMsg.content);
       }
     } catch (error) {
@@ -126,7 +129,6 @@ const Chat = () => {
 
       if (error) throw error;
 
-      // Reset to welcome message
       const welcomeMsg = {
         role: "assistant" as const,
         content: "Привет! Я ваш AI стилист. Задайте мне любые вопросы о моде, стиле или рекомендациях по вашему гардеробу."
@@ -204,21 +206,21 @@ const Chat = () => {
     }
   };
 
-  const sendMessage = async () => {
-    if (!input.trim() || isLoading || !userId) return;
+  const sendMessage = async (messageText?: string) => {
+    const text = messageText || input;
+    if (!text.trim() || isLoading || !userId) return;
 
-    const userMessage: Message = { role: "user", content: input };
+    const userMessage: Message = { role: "user", content: text };
     setMessages((prev) => [...prev, userMessage]);
     setInput("");
     setIsLoading(true);
 
-    // Save user message to DB
-    await saveMessage(userId, "user", input);
+    await saveMessage(userId, "user", text);
 
     try {
       const { data, error } = await supabase.functions.invoke("ai-chat", {
         body: { 
-          message: input, 
+          message: text, 
           messages: messages.map(m => ({ role: m.role, content: m.content })),
           weather,
           wardrobe: wardrobe.map(item => ({
@@ -237,7 +239,6 @@ const Chat = () => {
       const assistantMessage: Message = { role: "assistant", content: data.response };
       setMessages((prev) => [...prev, assistantMessage]);
       
-      // Save assistant message to DB
       await saveMessage(userId, "assistant", data.response);
     } catch (error) {
       console.error("Error:", error);
@@ -259,94 +260,149 @@ const Chat = () => {
   };
 
   return (
-    <div className="min-h-screen gradient-soft">
-      <div className="container py-8 px-4 max-w-4xl mx-auto">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-              AI Стилист
+    <div className="min-h-screen bg-background">
+      <div className="container max-w-6xl mx-auto px-6 py-12">
+        {/* Header */}
+        <div className="grid lg:grid-cols-3 gap-12 mb-12">
+          <div className="lg:col-span-2">
+            <span className="text-accent font-display text-sm font-semibold uppercase tracking-wider">AI Stylist</span>
+            <h1 className="font-display text-5xl md:text-6xl font-bold uppercase tracking-tight mt-2">
+              Чат
             </h1>
-            <p className="text-muted-foreground mt-2">
-              Задайте вопросы о моде и получите персональные советы
+            <p className="text-muted-foreground font-body mt-4 max-w-md">
+              Задайте вопросы о моде и получите персональные советы на основе вашего гардероба
             </p>
           </div>
-          {userId && messages.length > 1 && (
-            <Button variant="outline" size="sm" onClick={clearHistory}>
-              <Trash2 className="h-4 w-4 mr-2" />
-              Очистить историю
-            </Button>
-          )}
+          
+          <div className="flex flex-col justify-end">
+            {weather && (
+              <div className="bg-secondary p-4">
+                <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-display">Погода сейчас</span>
+                <p className="font-display text-2xl font-bold">{weather.temp}°C</p>
+                <p className="text-sm text-muted-foreground">{weather.condition}</p>
+              </div>
+            )}
+          </div>
         </div>
 
-        <Card className="shadow-elegant overflow-hidden">
-          <ScrollArea className="h-[500px] p-6" ref={scrollRef}>
-            <div className="space-y-4">
-              {messages.map((message, index) => (
-                <div
-                  key={message.id || index}
-                  className={`flex items-start gap-3 ${
-                    message.role === "user" ? "flex-row-reverse" : ""
-                  }`}
+        {/* Quick prompts */}
+        {userId && messages.length <= 2 && (
+          <div className="mb-8">
+            <p className="text-xs uppercase tracking-wider text-muted-foreground font-display mb-3">Быстрые запросы</p>
+            <div className="flex flex-wrap gap-2">
+              {quickPrompts.map((prompt, i) => (
+                <button
+                  key={i}
+                  onClick={() => sendMessage(prompt)}
+                  className="px-4 py-2 border border-border text-sm font-display font-medium hover:bg-foreground hover:text-background transition-smooth"
                 >
-                  <div
-                    className={`h-8 w-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                      message.role === "user" ? "bg-primary" : "gradient-accent"
-                    }`}
-                  >
-                    {message.role === "user" ? (
-                      <User className="h-4 w-4 text-white" />
-                    ) : (
-                      <Bot className="h-4 w-4 text-white" />
-                    )}
-                  </div>
-                  <div
-                    className={`flex-1 rounded-2xl p-4 ${
-                      message.role === "user"
-                        ? "bg-primary text-primary-foreground ml-12"
-                        : "bg-muted mr-12"
-                    }`}
-                  >
-                    <p className="whitespace-pre-wrap">{message.content}</p>
-                  </div>
-                </div>
+                  {prompt}
+                </button>
               ))}
-              {isLoading && (
-                <div className="flex items-start gap-3">
-                  <div className="h-8 w-8 rounded-full gradient-accent flex items-center justify-center flex-shrink-0">
-                    <Bot className="h-4 w-4 text-white" />
-                  </div>
-                  <div className="flex-1 rounded-2xl p-4 bg-muted mr-12">
-                    <div className="flex gap-1">
-                      <div className="w-2 h-2 bg-primary rounded-full animate-bounce" />
-                      <div className="w-2 h-2 bg-primary rounded-full animate-bounce [animation-delay:0.2s]" />
-                      <div className="w-2 h-2 bg-primary rounded-full animate-bounce [animation-delay:0.4s]" />
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          </ScrollArea>
-
-          <div className="border-t p-4 bg-card">
-            <div className="flex gap-2">
-              <Input
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyPress={handleKeyPress}
-                placeholder={userId ? "Напишите сообщение..." : "Войдите, чтобы начать чат"}
-                disabled={isLoading || !userId}
-                className="flex-1"
-              />
-              <Button
-                onClick={sendMessage}
-                disabled={isLoading || !input.trim() || !userId}
-                className="gradient-accent"
-              >
-                <Send className="h-4 w-4" />
-              </Button>
             </div>
           </div>
-        </Card>
+        )}
+
+        {/* Chat area */}
+        <div className="grid lg:grid-cols-4 gap-6">
+          <div className="lg:col-span-3">
+            <div className="border border-border bg-card">
+              <ScrollArea className="h-[500px]" ref={scrollRef}>
+                <div className="p-6 space-y-6">
+                  {messages.map((message, index) => (
+                    <div
+                      key={message.id || index}
+                      className={`flex gap-4 ${message.role === "user" ? "flex-row-reverse" : ""}`}
+                    >
+                      <div
+                        className={`h-10 w-10 flex items-center justify-center flex-shrink-0 ${
+                          message.role === "user" ? "bg-foreground" : "bg-accent"
+                        }`}
+                      >
+                        {message.role === "user" ? (
+                          <User className="h-5 w-5 text-background" />
+                        ) : (
+                          <Bot className="h-5 w-5 text-accent-foreground" />
+                        )}
+                      </div>
+                      <div
+                        className={`flex-1 ${
+                          message.role === "user" ? "text-right" : ""
+                        }`}
+                      >
+                        <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-display">
+                          {message.role === "user" ? "Вы" : "AI Стилист"}
+                        </span>
+                        <p className="font-body mt-1 whitespace-pre-wrap">{message.content}</p>
+                      </div>
+                    </div>
+                  ))}
+                  {isLoading && (
+                    <div className="flex gap-4">
+                      <div className="h-10 w-10 bg-accent flex items-center justify-center flex-shrink-0">
+                        <Bot className="h-5 w-5 text-accent-foreground" />
+                      </div>
+                      <div>
+                        <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-display">AI Стилист</span>
+                        <div className="flex gap-1 mt-2">
+                          <div className="w-2 h-2 bg-accent rounded-full animate-bounce" />
+                          <div className="w-2 h-2 bg-accent rounded-full animate-bounce [animation-delay:0.2s]" />
+                          <div className="w-2 h-2 bg-accent rounded-full animate-bounce [animation-delay:0.4s]" />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </ScrollArea>
+
+              <div className="border-t border-border p-4">
+                <div className="flex gap-3">
+                  <Input
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    onKeyPress={handleKeyPress}
+                    placeholder={userId ? "Напишите сообщение..." : "Войдите, чтобы начать чат"}
+                    disabled={isLoading || !userId}
+                    className="flex-1 border-0 bg-secondary font-body"
+                  />
+                  <Button
+                    onClick={() => sendMessage()}
+                    disabled={isLoading || !input.trim() || !userId}
+                    className="bg-accent hover:bg-accent/90 text-accent-foreground px-6"
+                  >
+                    <Send className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Sidebar */}
+          <div className="space-y-4">
+            {userId && messages.length > 1 && (
+              <button
+                onClick={clearHistory}
+                className="w-full flex items-center justify-between p-4 border border-border hover:bg-secondary transition-smooth"
+              >
+                <span className="text-sm font-display font-medium">Очистить историю</span>
+                <Trash2 className="h-4 w-4" />
+              </button>
+            )}
+            
+            <div className="p-4 bg-foreground text-background">
+              <span className="text-[10px] uppercase tracking-wider opacity-60 font-display">Подсказка</span>
+              <p className="text-sm font-body mt-2">
+                AI учитывает ваш гардероб и текущую погоду для рекомендаций
+              </p>
+            </div>
+
+            <div className="p-4 border border-border">
+              <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-display">Ваш гардероб</span>
+              <p className="font-display text-2xl font-bold mt-1">{wardrobe.length}</p>
+              <p className="text-xs text-muted-foreground">вещей</p>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

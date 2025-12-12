@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { Home, Sparkles, TrendingUp, MessageCircle, LogOut, User } from "lucide-react";
+import { Home, Shirt, Sparkles, TrendingUp, MessageCircle, LogOut, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";

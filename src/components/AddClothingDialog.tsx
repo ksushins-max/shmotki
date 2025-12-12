@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { Camera, Upload, X } from "lucide-react";
 
 interface AddClothingDialogProps {
   open: boolean;
@@ -21,8 +22,30 @@ const AddClothingDialog = ({ open, onOpenChange, onItemAdded }: AddClothingDialo
   const [season, setSeason] = useState("");
   const [description, setDescription] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileSelect = (file: File | null) => {
+    if (file) {
+      setImageFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const clearImage = () => {
+    setImageFile(null);
+    setImagePreview(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+    if (cameraInputRef.current) cameraInputRef.current.value = "";
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,12 +65,11 @@ const AddClothingDialog = ({ open, onOpenChange, onItemAdded }: AddClothingDialo
 
     let imageUrl = null;
 
-    // Upload image if provided
     if (imageFile) {
-      const fileExt = imageFile.name.split('.').pop();
+      const fileExt = imageFile.name.split('.').pop() || 'jpg';
       const fileName = `${user.id}/${Date.now()}.${fileExt}`;
       
-      const { error: uploadError, data } = await supabase.storage
+      const { error: uploadError } = await supabase.storage
         .from('clothing-images')
         .upload(fileName, imageFile);
 
@@ -96,7 +118,7 @@ const AddClothingDialog = ({ open, onOpenChange, onItemAdded }: AddClothingDialo
       setColor("");
       setSeason("");
       setDescription("");
-      setImageFile(null);
+      clearImage();
       onOpenChange(false);
       onItemAdded?.();
     }
@@ -104,26 +126,27 @@ const AddClothingDialog = ({ open, onOpenChange, onItemAdded }: AddClothingDialo
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md bg-background border-border">
         <DialogHeader>
-          <DialogTitle className="text-2xl">Добавить вещь</DialogTitle>
+          <DialogTitle className="font-display text-2xl uppercase tracking-tight">Добавить вещь</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="name">Название</Label>
+            <Label htmlFor="name" className="text-xs uppercase tracking-wider font-display">Название</Label>
             <Input
               id="name"
               placeholder="Например: Белая рубашка"
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
+              className="border-border"
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="category">Категория</Label>
+            <Label htmlFor="category" className="text-xs uppercase tracking-wider font-display">Категория</Label>
             <Select value={category} onValueChange={setCategory} required>
-              <SelectTrigger>
+              <SelectTrigger className="border-border">
                 <SelectValue placeholder="Выберите категорию" />
               </SelectTrigger>
               <SelectContent>
@@ -138,20 +161,21 @@ const AddClothingDialog = ({ open, onOpenChange, onItemAdded }: AddClothingDialo
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="color">Цвет</Label>
+            <Label htmlFor="color" className="text-xs uppercase tracking-wider font-display">Цвет</Label>
             <Input
               id="color"
               placeholder="Например: Белый, Черный"
               value={color}
               onChange={(e) => setColor(e.target.value)}
               required
+              className="border-border"
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="season">Сезон</Label>
+            <Label htmlFor="season" className="text-xs uppercase tracking-wider font-display">Сезон</Label>
             <Select value={season} onValueChange={setSeason} required>
-              <SelectTrigger>
+              <SelectTrigger className="border-border">
                 <SelectValue placeholder="Выберите сезон" />
               </SelectTrigger>
               <SelectContent>
@@ -165,23 +189,75 @@ const AddClothingDialog = ({ open, onOpenChange, onItemAdded }: AddClothingDialo
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="description">Описание (опционально)</Label>
+            <Label htmlFor="description" className="text-xs uppercase tracking-wider font-display">Описание (опционально)</Label>
             <Textarea
               id="description"
               placeholder="Дополнительные детали..."
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              rows={3}
+              rows={2}
+              className="border-border"
             />
           </div>
 
+          {/* Image upload section */}
           <div className="space-y-2">
-            <Label htmlFor="image">Фото вещи</Label>
-            <Input
-              id="image"
+            <Label className="text-xs uppercase tracking-wider font-display">Фото вещи</Label>
+            
+            {imagePreview ? (
+              <div className="relative">
+                <img 
+                  src={imagePreview} 
+                  alt="Preview" 
+                  className="w-full h-40 object-cover border border-border"
+                />
+                <button
+                  type="button"
+                  onClick={clearImage}
+                  className="absolute top-2 right-2 p-1 bg-foreground text-background hover:bg-foreground/90 transition-smooth"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-3">
+                {/* Camera button */}
+                <button
+                  type="button"
+                  onClick={() => cameraInputRef.current?.click()}
+                  className="flex flex-col items-center justify-center gap-2 p-4 border-2 border-dashed border-border hover:border-accent transition-smooth"
+                >
+                  <Camera className="h-6 w-6 text-muted-foreground" />
+                  <span className="text-xs text-muted-foreground font-display uppercase tracking-wider">Камера</span>
+                </button>
+                
+                {/* Upload button */}
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="flex flex-col items-center justify-center gap-2 p-4 border-2 border-dashed border-border hover:border-accent transition-smooth"
+                >
+                  <Upload className="h-6 w-6 text-muted-foreground" />
+                  <span className="text-xs text-muted-foreground font-display uppercase tracking-wider">Файл</span>
+                </button>
+              </div>
+            )}
+            
+            {/* Hidden file inputs */}
+            <input
+              ref={cameraInputRef}
               type="file"
               accept="image/*"
-              onChange={(e) => setImageFile(e.target.files?.[0] || null)}
+              capture="environment"
+              className="hidden"
+              onChange={(e) => handleFileSelect(e.target.files?.[0] || null)}
+            />
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => handleFileSelect(e.target.files?.[0] || null)}
             />
           </div>
 
@@ -190,13 +266,13 @@ const AddClothingDialog = ({ open, onOpenChange, onItemAdded }: AddClothingDialo
               type="button"
               variant="outline"
               onClick={() => onOpenChange(false)}
-              className="flex-1"
+              className="flex-1 border-border font-display uppercase tracking-wider text-xs"
             >
               Отмена
             </Button>
             <Button
               type="submit"
-              className="flex-1 gradient-accent"
+              className="flex-1 bg-foreground text-background hover:bg-foreground/90 font-display uppercase tracking-wider text-xs"
               disabled={loading}
             >
               {loading ? "Загрузка..." : "Добавить"}

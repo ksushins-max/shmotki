@@ -1,10 +1,9 @@
 import { useState, useEffect } from "react";
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { TrendingUp, Sparkles, Loader2, ShoppingBag } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { TrendingUp, Sparkles, Loader2, ShoppingBag, RefreshCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
+
 interface Recommendation {
   title: string;
   description: string;
@@ -12,24 +11,21 @@ interface Recommendation {
   priority: "high" | "medium" | "low";
   category: string;
 }
+
 const Analysis = () => {
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [wardrobeStats, setWardrobeStats] = useState<any>(null);
-  const {
-    toast
-  } = useToast();
+  const { toast } = useToast();
+
   useEffect(() => {
     fetchWardrobeAndAnalyze();
   }, []);
+
   const fetchWardrobeAndAnalyze = async () => {
     setIsLoading(true);
     try {
-      const {
-        data: {
-          user
-        }
-      } = await supabase.auth.getUser();
+      const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         toast({
           title: "Требуется авторизация",
@@ -39,42 +35,36 @@ const Analysis = () => {
         setIsLoading(false);
         return;
       }
-      const {
-        data: wardrobe,
-        error
-      } = await supabase.from("clothing_items").select("*").eq("user_id", user.id);
+
+      const { data: wardrobe, error } = await supabase
+        .from("clothing_items")
+        .select("*")
+        .eq("user_id", user.id);
+      
       if (error) throw error;
 
-      // Calculate wardrobe stats
       const stats = {
         total: wardrobe?.length || 0,
-        byCategory: {} as {
-          [key: string]: number;
-        },
-        byColor: {} as {
-          [key: string]: number;
-        },
-        bySeason: {} as {
-          [key: string]: number;
-        }
+        byCategory: {} as { [key: string]: number },
+        byColor: {} as { [key: string]: number },
+        bySeason: {} as { [key: string]: number }
       };
+
       wardrobe?.forEach(item => {
         stats.byCategory[item.category] = (stats.byCategory[item.category] || 0) + 1;
         stats.byColor[item.color] = (stats.byColor[item.color] || 0) + 1;
         stats.bySeason[item.season] = (stats.bySeason[item.season] || 0) + 1;
       });
+
       setWardrobeStats(stats);
 
-      // Fetch user profile
-      const {
-        data: profile
-      } = await supabase.from("profiles").select("*").eq("user_id", user.id).maybeSingle();
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("user_id", user.id)
+        .maybeSingle();
 
-      // Generate AI recommendations
-      const {
-        data,
-        error: aiError
-      } = await supabase.functions.invoke("ai-chat", {
+      const { data, error: aiError } = await supabase.functions.invoke("ai-chat", {
         body: {
           message: `Проанализируй мой гардероб и дай детальные рекомендации по улучшению. 
           
@@ -105,9 +95,10 @@ const Analysis = () => {
           isAnalysis: true
         }
       });
+
       if (aiError) throw aiError;
+
       try {
-        // Extract JSON from response
         const jsonMatch = data.response.match(/\[[\s\S]*\]/);
         if (jsonMatch) {
           const parsed = JSON.parse(jsonMatch[0]);
@@ -115,7 +106,6 @@ const Analysis = () => {
         }
       } catch (parseError) {
         console.error("Error parsing recommendations:", parseError);
-        // Fallback recommendations
         setRecommendations([{
           title: "Добавьте базовые вещи",
           description: "Базовый гардероб должен включать универсальные вещи, которые легко сочетаются между собой.",
@@ -135,18 +125,20 @@ const Analysis = () => {
       setIsLoading(false);
     }
   };
-  const getPriorityColor = (priority: string) => {
+
+  const getPriorityStyles = (priority: string) => {
     switch (priority) {
       case "high":
-        return "bg-red-100 text-red-700 border-red-200";
+        return "border-l-destructive bg-destructive/5";
       case "medium":
-        return "bg-amber-100 text-amber-700 border-amber-200";
+        return "border-l-accent bg-accent/5";
       case "low":
-        return "bg-green-100 text-green-700 border-green-200";
+        return "border-l-muted-foreground bg-muted/30";
       default:
-        return "bg-muted";
+        return "border-l-border";
     }
   };
+
   const getPriorityLabel = (priority: string) => {
     switch (priority) {
       case "high":
@@ -159,96 +151,142 @@ const Analysis = () => {
         return priority;
     }
   };
-  return <div className="min-h-screen gradient-soft">
-      <div className="container py-8 px-4 max-w-7xl mx-auto">
-        <div className="flex items-center justify-between mb-8">
+
+  return (
+    <div className="min-h-screen bg-background">
+      <div className="container max-w-7xl mx-auto px-6 py-12">
+        {/* Header */}
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
           <div>
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-accent">
-              Анализ гардероба
+            <span className="text-accent font-display text-sm font-semibold uppercase tracking-wider">Analysis</span>
+            <h1 className="font-display text-5xl md:text-7xl font-bold uppercase tracking-tight mt-2">
+              Анализ
             </h1>
-            <p className="text-muted-foreground mt-2">
+            <p className="text-muted-foreground font-body mt-2">
               AI анализ вашего стиля и рекомендации по улучшению
             </p>
           </div>
-          <Button onClick={fetchWardrobeAndAnalyze} disabled={isLoading} className="gradient-accent shadow-elegant hover:scale-105 transition-smooth" size="lg">
-            {isLoading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Sparkles className="mr-2 h-5 w-5" />}
-            Обновить анализ
+          
+          <Button
+            onClick={fetchWardrobeAndAnalyze}
+            disabled={isLoading}
+            className="bg-foreground text-background hover:bg-foreground/90 font-display text-sm font-semibold uppercase tracking-wider px-6"
+          >
+            {isLoading ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <RefreshCw className="mr-2 h-4 w-4" />
+            )}
+            Обновить
           </Button>
         </div>
 
-        {wardrobeStats && <Card className="p-6 mb-8 shadow-soft">
-            <h3 className="font-semibold mb-4">Статистика гардероба</h3>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-              <div className="p-4 bg-muted rounded-lg">
-                <p className="text-3xl font-bold text-primary">{wardrobeStats.total}</p>
-                <p className="text-sm text-muted-foreground">Всего вещей</p>
-              </div>
-              <div className="p-4 bg-muted rounded-lg">
-                <p className="text-3xl font-bold text-primary">{Object.keys(wardrobeStats.byCategory).length}</p>
-                <p className="text-sm text-muted-foreground">Категорий</p>
-              </div>
-              <div className="p-4 bg-muted rounded-lg">
-                <p className="text-3xl font-bold text-primary">{Object.keys(wardrobeStats.byColor).length}</p>
-                <p className="text-sm text-muted-foreground">Цветов</p>
-              </div>
-              <div className="p-4 bg-muted rounded-lg">
-                <p className="text-3xl font-bold text-primary">{Object.keys(wardrobeStats.bySeason).length}</p>
-                <p className="text-sm text-muted-foreground">Сезонов</p>
-              </div>
+        {/* Stats */}
+        {wardrobeStats && (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
+            <div className="bg-card border border-border p-6">
+              <span className="text-[10px] text-muted-foreground font-display font-semibold tracking-wider uppercase">Всего</span>
+              <p className="font-display text-4xl font-bold mt-2">{wardrobeStats.total}</p>
+              <p className="text-xs text-muted-foreground font-body mt-1">вещей</p>
             </div>
-          </Card>}
-
-        <Card className="p-8 shadow-soft">
-          <div className="flex items-center gap-4 mb-6">
-            <div className="h-12 w-12 rounded-full gradient-accent flex items-center justify-center">
-              <TrendingUp className="h-6 w-6 text-white" />
+            <div className="bg-card border border-border p-6">
+              <span className="text-[10px] text-muted-foreground font-display font-semibold tracking-wider uppercase">Категорий</span>
+              <p className="font-display text-4xl font-bold mt-2">{Object.keys(wardrobeStats.byCategory).length}</p>
+              <p className="text-xs text-muted-foreground font-body mt-1">типов одежды</p>
             </div>
-            <div>
-              <h2 className="text-2xl font-semibold">Персональные рекомендации</h2>
-              <p className="text-muted-foreground">
-                AI советы для улучшения вашего гардероба с конкретными покупками
-              </p>
+            <div className="bg-card border border-border p-6">
+              <span className="text-[10px] text-muted-foreground font-display font-semibold tracking-wider uppercase">Цветов</span>
+              <p className="font-display text-4xl font-bold mt-2">{Object.keys(wardrobeStats.byColor).length}</p>
+              <p className="text-xs text-muted-foreground font-body mt-1">в палитре</p>
+            </div>
+            <div className="bg-card border border-border p-6">
+              <span className="text-[10px] text-muted-foreground font-display font-semibold tracking-wider uppercase">Сезонов</span>
+              <p className="font-display text-4xl font-bold mt-2">{Object.keys(wardrobeStats.bySeason).length}</p>
+              <p className="text-xs text-muted-foreground font-body mt-1">покрыто</p>
             </div>
           </div>
+        )}
 
-          {isLoading ? <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            </div> : <div className="space-y-6">
-              {recommendations.map((rec, index) => <div key={index} className="p-6 border border-border rounded-xl hover:border-primary transition-smooth">
-                  <div className="flex items-start justify-between gap-4 mb-3">
-                    <h3 className="font-semibold text-lg">{rec.title}</h3>
-                    <div className="flex gap-2 flex-shrink-0">
-                      <Badge variant="outline" className={getPriorityColor(rec.priority)}>
-                        {getPriorityLabel(rec.priority)}
-                      </Badge>
-                      <Badge variant="secondary">{rec.category}</Badge>
-                    </div>
+        {/* Info bar */}
+        <div className="flex items-center gap-6 mb-8 border-b border-border pb-4">
+          <div className="flex items-center gap-2">
+            <TrendingUp className="h-4 w-4 text-accent" />
+            <span className="text-xs uppercase tracking-wider text-muted-foreground font-display">
+              Персональные рекомендации
+            </span>
+          </div>
+          <span className="ml-auto text-xs text-muted-foreground font-body">
+            [{recommendations.length} советов]
+          </span>
+        </div>
+
+        {/* Recommendations */}
+        {isLoading ? (
+          <div className="grid md:grid-cols-2 gap-4">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="aspect-[2/1] bg-secondary animate-pulse" />
+            ))}
+          </div>
+        ) : (
+          <div className="grid md:grid-cols-2 gap-4">
+            {recommendations.map((rec, index) => (
+              <div 
+                key={index} 
+                className={`border border-border border-l-4 p-6 transition-smooth hover:border-accent ${getPriorityStyles(rec.priority)}`}
+              >
+                {/* Header */}
+                <div className="flex items-start justify-between gap-4 mb-4">
+                  <div>
+                    <span className="text-[10px] text-muted-foreground font-display font-semibold tracking-wider">
+                      0{index + 1}
+                    </span>
+                    <h3 className="font-display text-lg font-bold uppercase mt-1">{rec.title}</h3>
                   </div>
-                  
-                  <p className="text-muted-foreground mb-4">
-                    {rec.description}
-                  </p>
-
-                  <div className="bg-muted/50 rounded-lg p-4">
-                    <div className="flex items-center gap-2 mb-3">
-                      <ShoppingBag className="h-4 w-4 text-primary" />
-                      <span className="font-medium text-sm">Что купить:</span>
-                    </div>
-                    <ul className="space-y-2">
-                      {rec.itemsToBuy.map((item, idx) => <li key={idx} className="flex items-start gap-2 text-sm">
-                          <span className="text-primary">•</span>
-                          <span>{item}</span>
-                        </li>)}
-                    </ul>
+                  <div className="flex gap-2 flex-shrink-0">
+                    <span className="text-[10px] px-2 py-1 bg-secondary text-foreground font-display uppercase tracking-wider">
+                      {getPriorityLabel(rec.priority)}
+                    </span>
+                    <span className="text-[10px] px-2 py-1 bg-foreground text-background font-display uppercase tracking-wider">
+                      {rec.category}
+                    </span>
                   </div>
-                </div>)}
+                </div>
 
-              {recommendations.length === 0 && !isLoading && <div className="text-center py-12 text-muted-foreground">
-                  <p>Добавьте вещи в гардероб для получения персональных рекомендаций</p>
-                </div>}
-            </div>}
-        </Card>
+                <p className="text-sm text-muted-foreground font-body mb-4">
+                  {rec.description}
+                </p>
+
+                {/* Shopping list */}
+                <div className="pt-4 border-t border-border">
+                  <div className="flex items-center gap-2 mb-3">
+                    <ShoppingBag className="h-4 w-4 text-accent" />
+                    <span className="text-xs uppercase tracking-wider text-muted-foreground font-display">Что купить</span>
+                  </div>
+                  <ul className="space-y-2">
+                    {rec.itemsToBuy.map((item, idx) => (
+                      <li key={idx} className="text-sm text-foreground font-body flex items-start gap-2">
+                        <span className="text-accent">•</span>
+                        {item}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            ))}
+
+            {recommendations.length === 0 && !isLoading && (
+              <div className="col-span-2 text-center py-16 border border-dashed border-border">
+                <Sparkles className="h-8 w-8 mx-auto mb-4 text-muted-foreground" />
+                <p className="text-muted-foreground font-body">
+                  Добавьте вещи в гардероб для получения персональных рекомендаций
+                </p>
+              </div>
+            )}
+          </div>
+        )}
       </div>
-    </div>;
+    </div>
+  );
 };
+
 export default Analysis;

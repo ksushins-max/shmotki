@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, ArrowUpRight, Loader2 } from "lucide-react";
+import { ArrowRight, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import wardrobeHero from "@/assets/wardrobe-hero.jpg";
 import styleAnalysis from "@/assets/style-analysis.jpg";
@@ -44,8 +44,8 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Hero Section */}
-      <section className="relative min-h-[90vh] flex items-center">
+      {/* Hero Section - Moodboard Style */}
+      <section className="relative min-h-[90vh] flex items-center overflow-hidden">
         <div className="container max-w-7xl mx-auto px-6 py-20">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div className="space-y-8 animate-fade-in" style={{ animationDelay: "0.1s" }}>
@@ -76,17 +76,51 @@ const Index = () => {
               </div>
             </div>
 
+            {/* Moodboard Style Collage */}
             <div className="relative animate-fade-in" style={{ animationDelay: "0.3s" }}>
-              <div className="aspect-[4/5] overflow-hidden">
-                <img 
-                  src={wardrobeHero} 
-                  alt="Fashion" 
-                  className="w-full h-full object-cover hover:scale-105 transition-all duration-700"
-                />
-              </div>
-              <div className="absolute -bottom-4 -left-4 bg-foreground text-background p-4">
-                <p className="font-display text-xs uppercase tracking-widest opacity-70">Season</p>
-                <p className="font-display text-2xl font-bold uppercase">24/25</p>
+              <div className="relative w-full max-w-lg mx-auto">
+                {/* Background paper layers */}
+                <div className="absolute inset-0 bg-secondary/60 rotate-3 shadow-lg" style={{ transform: "rotate(3deg) translateX(10px) translateY(5px)" }} />
+                <div className="absolute inset-0 bg-secondary/80 -rotate-2 shadow-md" style={{ transform: "rotate(-2deg) translateX(-5px) translateY(3px)" }} />
+                
+                {/* Main image container */}
+                <div className="relative bg-card shadow-xl p-3">
+                  <div className="aspect-[3/4] overflow-hidden">
+                    <img 
+                      src={wardrobeHero} 
+                      alt="Fashion" 
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  
+                  {/* Handwritten-style labels */}
+                  <div className="absolute -right-4 top-1/4 transform rotate-12">
+                    <span className="font-body italic text-sm text-muted-foreground bg-background px-2 py-1 shadow-sm">
+                      стиль сезона →
+                    </span>
+                  </div>
+                  
+                  <div className="absolute -left-8 top-1/2 transform -rotate-6">
+                    <span className="font-body italic text-sm text-muted-foreground bg-background px-2 py-1 shadow-sm">
+                      ваш образ
+                    </span>
+                  </div>
+                  
+                  <div className="absolute -right-6 bottom-1/4 transform rotate-6">
+                    <span className="font-body italic text-sm text-muted-foreground bg-background px-2 py-1 shadow-sm">
+                      AI подбор →
+                    </span>
+                  </div>
+                </div>
+                
+                {/* Paperclip decoration */}
+                <div className="absolute -top-6 left-1/4 w-8 h-16 border-2 border-muted-foreground/40 rounded-full" style={{ borderBottomColor: "transparent", borderLeftColor: "transparent", transform: "rotate(45deg)" }} />
+                
+                {/* Season badge */}
+                <div className="absolute -bottom-4 -left-4 bg-foreground text-background p-4 shadow-lg">
+                  <p className="font-display text-xs uppercase tracking-widest opacity-70">Season</p>
+                  <p className="font-display text-2xl font-bold uppercase">24/25</p>
+                </div>
               </div>
             </div>
           </div>
@@ -109,11 +143,11 @@ const Index = () => {
         <div className="container max-w-7xl mx-auto px-6">
           <div className="mb-12">
             <div className="flex items-baseline gap-4 mb-2">
-              <h2 className="font-display text-4xl md:text-5xl font-bold uppercase tracking-tight">
-                Тренды
-              </h2>
-              <span className="text-xs text-muted-foreground font-body">[{fashionTrends.length}]</span>
+              <span className="text-accent font-display text-sm font-semibold uppercase tracking-wider">Trends</span>
             </div>
+            <h2 className="font-display text-4xl md:text-5xl font-bold uppercase tracking-tight">
+              Тренды
+            </h2>
           </div>
           
           {loadingTrends ? (

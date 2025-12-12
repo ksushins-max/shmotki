@@ -16,9 +16,13 @@ const fashionTrends = [
 const Index = () => {
   const [trends, setTrends] = useState<string | null>(null);
   const [loadingTrends, setLoadingTrends] = useState(true);
+  const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
     fetchTrends();
+    // Trigger animation after mount
+    const timer = setTimeout(() => setIsVisible(true), 100);
+    return () => clearTimeout(timer);
   }, []);
 
   const fetchTrends = async () => {
@@ -44,13 +48,20 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Hero Section - Moodboard Style */}
+      {/* Hero Section - Moodboard Style with Animation */}
       <section className="relative min-h-[90vh] flex items-center overflow-hidden">
         <div className="container max-w-7xl mx-auto px-6 py-20">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <div className="space-y-8 animate-fade-in" style={{ animationDelay: "0.1s" }}>
+            <div 
+              className={`space-y-8 transition-all duration-1000 ease-out ${
+                isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
+              }`}
+            >
               <div className="space-y-6">
-                <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground font-body font-medium">
+                <p 
+                  className="text-xs uppercase tracking-[0.2em] text-muted-foreground font-body font-medium"
+                  style={{ transitionDelay: "0.1s" }}
+                >
                   AI-Powered Fashion
                 </p>
                 <h1 className="font-display text-editorial-xl font-bold uppercase tracking-tight">
@@ -76,48 +87,95 @@ const Index = () => {
               </div>
             </div>
 
-            {/* Moodboard Style Collage */}
-            <div className="relative animate-fade-in" style={{ animationDelay: "0.3s" }}>
+            {/* Moodboard Style Collage with Staggered Animation */}
+            <div className="relative">
               <div className="relative w-full max-w-lg mx-auto">
-                {/* Background paper layers */}
-                <div className="absolute inset-0 bg-secondary/60 rotate-3 shadow-lg" style={{ transform: "rotate(3deg) translateX(10px) translateY(5px)" }} />
-                <div className="absolute inset-0 bg-secondary/80 -rotate-2 shadow-md" style={{ transform: "rotate(-2deg) translateX(-5px) translateY(3px)" }} />
+                {/* Background paper layers with animation */}
+                <div 
+                  className={`absolute inset-0 bg-secondary/60 shadow-lg transition-all duration-1000 ease-out ${
+                    isVisible ? "opacity-100 rotate-3 translate-x-2.5 translate-y-1.5" : "opacity-0 rotate-0 translate-x-0 translate-y-0"
+                  }`}
+                  style={{ transitionDelay: "0.3s" }}
+                />
+                <div 
+                  className={`absolute inset-0 bg-secondary/80 shadow-md transition-all duration-1000 ease-out ${
+                    isVisible ? "opacity-100 -rotate-2 -translate-x-1 translate-y-0.5" : "opacity-0 rotate-0 translate-x-0 translate-y-0"
+                  }`}
+                  style={{ transitionDelay: "0.4s" }}
+                />
                 
                 {/* Main image container */}
-                <div className="relative bg-card shadow-xl p-3">
+                <div 
+                  className={`relative bg-card shadow-xl p-3 transition-all duration-1000 ease-out ${
+                    isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
+                  }`}
+                  style={{ transitionDelay: "0.5s" }}
+                >
                   <div className="aspect-[3/4] overflow-hidden">
                     <img 
                       src={wardrobeHero} 
                       alt="Fashion" 
-                      className="w-full h-full object-cover"
+                      className={`w-full h-full object-cover transition-transform duration-1000 ${
+                        isVisible ? "scale-100" : "scale-110"
+                      }`}
+                      style={{ transitionDelay: "0.7s" }}
                     />
                   </div>
                   
-                  {/* Handwritten-style labels */}
-                  <div className="absolute -right-4 top-1/4 transform rotate-12">
-                    <span className="font-body italic text-sm text-muted-foreground bg-background px-2 py-1 shadow-sm">
+                  {/* Handwritten-style labels with staggered animation */}
+                  <div 
+                    className={`absolute -right-4 top-1/4 transform transition-all duration-700 ease-out ${
+                      isVisible ? "opacity-100 rotate-12 translate-x-0" : "opacity-0 rotate-0 translate-x-10"
+                    }`}
+                    style={{ transitionDelay: "0.9s" }}
+                  >
+                    <span className="font-body italic text-sm text-muted-foreground bg-background px-2 py-1 shadow-sm inline-block animate-float">
                       стиль сезона →
                     </span>
                   </div>
                   
-                  <div className="absolute -left-8 top-1/2 transform -rotate-6">
-                    <span className="font-body italic text-sm text-muted-foreground bg-background px-2 py-1 shadow-sm">
+                  <div 
+                    className={`absolute -left-8 top-1/2 transform transition-all duration-700 ease-out ${
+                      isVisible ? "opacity-100 -rotate-6 translate-x-0" : "opacity-0 rotate-0 -translate-x-10"
+                    }`}
+                    style={{ transitionDelay: "1s" }}
+                  >
+                    <span className="font-body italic text-sm text-muted-foreground bg-background px-2 py-1 shadow-sm inline-block animate-float-delayed">
                       ваш образ
                     </span>
                   </div>
                   
-                  <div className="absolute -right-6 bottom-1/4 transform rotate-6">
-                    <span className="font-body italic text-sm text-muted-foreground bg-background px-2 py-1 shadow-sm">
+                  <div 
+                    className={`absolute -right-6 bottom-1/4 transform transition-all duration-700 ease-out ${
+                      isVisible ? "opacity-100 rotate-6 translate-x-0" : "opacity-0 rotate-0 translate-x-10"
+                    }`}
+                    style={{ transitionDelay: "1.1s" }}
+                  >
+                    <span className="font-body italic text-sm text-muted-foreground bg-background px-2 py-1 shadow-sm inline-block animate-float">
                       AI подбор →
                     </span>
                   </div>
                 </div>
                 
-                {/* Paperclip decoration */}
-                <div className="absolute -top-6 left-1/4 w-8 h-16 border-2 border-muted-foreground/40 rounded-full" style={{ borderBottomColor: "transparent", borderLeftColor: "transparent", transform: "rotate(45deg)" }} />
+                {/* Paperclip decoration with animation */}
+                <div 
+                  className={`absolute -top-6 left-1/4 w-8 h-16 border-2 border-muted-foreground/40 rounded-full transition-all duration-700 ease-out ${
+                    isVisible ? "opacity-100 rotate-45" : "opacity-0 rotate-0"
+                  }`}
+                  style={{ 
+                    borderBottomColor: "transparent", 
+                    borderLeftColor: "transparent",
+                    transitionDelay: "1.2s"
+                  }} 
+                />
                 
-                {/* Season badge */}
-                <div className="absolute -bottom-4 -left-4 bg-foreground text-background p-4 shadow-lg">
+                {/* Season badge with animation */}
+                <div 
+                  className={`absolute -bottom-4 -left-4 bg-foreground text-background p-4 shadow-lg transition-all duration-700 ease-out ${
+                    isVisible ? "opacity-100 translate-x-0 translate-y-0" : "opacity-0 -translate-x-10 translate-y-10"
+                  }`}
+                  style={{ transitionDelay: "0.8s" }}
+                >
                   <p className="font-display text-xs uppercase tracking-widest opacity-70">Season</p>
                   <p className="font-display text-2xl font-bold uppercase">24/25</p>
                 </div>

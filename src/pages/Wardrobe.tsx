@@ -2,12 +2,15 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus, RefreshCw } from "lucide-react";
 import AddClothingDialog from "@/components/AddClothingDialog";
+import EditClothingDialog from "@/components/EditClothingDialog";
 import ClothingCard from "@/components/ClothingCard";
 import { supabase } from "@/integrations/supabase/client";
-import { useWardrobeItems } from "@/hooks/useWardrobeItems";
+import { useWardrobeItems, ClothingItem } from "@/hooks/useWardrobeItems";
 
 const Wardrobe = () => {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editingItem, setEditingItem] = useState<ClothingItem | null>(null);
   const [user, setUser] = useState<any>(null);
   const [filter, setFilter] = useState<string>("all");
 
@@ -28,6 +31,15 @@ const Wardrobe = () => {
   const { items, isLoading, deleteItem, refresh } = useWardrobeItems(user?.id);
 
   const handleItemAdded = () => {
+    refresh();
+  };
+
+  const handleEditItem = (item: ClothingItem) => {
+    setEditingItem(item);
+    setIsEditDialogOpen(true);
+  };
+
+  const handleItemUpdated = () => {
     refresh();
   };
 
@@ -132,7 +144,9 @@ const Wardrobe = () => {
                   color={item.color}
                   season={item.season}
                   imageUrl={item.image_url}
+                  description={item.description}
                   onDelete={deleteItem}
+                  onEdit={handleEditItem}
                   index={index}
                 />
               ))
@@ -144,6 +158,13 @@ const Wardrobe = () => {
           open={isAddDialogOpen}
           onOpenChange={setIsAddDialogOpen}
           onItemAdded={handleItemAdded}
+        />
+
+        <EditClothingDialog
+          open={isEditDialogOpen}
+          onOpenChange={setIsEditDialogOpen}
+          item={editingItem}
+          onItemUpdated={handleItemUpdated}
         />
       </div>
     </div>

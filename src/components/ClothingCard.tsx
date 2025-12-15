@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Shirt, Trash2 } from "lucide-react";
+import { Shirt, Trash2, Pencil } from "lucide-react";
+import { ClothingItem } from "@/hooks/useWardrobeItems";
 
 interface ClothingCardProps {
   id: string;
@@ -8,11 +9,13 @@ interface ClothingCardProps {
   color: string;
   season: string;
   imageUrl?: string;
+  description?: string;
   onDelete: (id: string) => void;
+  onEdit?: (item: ClothingItem) => void;
   index?: number;
 }
 
-const ClothingCard = ({ id, name, category, color, season, imageUrl, onDelete, index }: ClothingCardProps) => {
+const ClothingCard = ({ id, name, category, color, season, imageUrl, description, onDelete, onEdit, index }: ClothingCardProps) => {
   const [imageError, setImageError] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
 
@@ -44,16 +47,29 @@ const ClothingCard = ({ id, name, category, color, season, imageUrl, onDelete, i
           <Shirt className="h-16 w-16 text-muted-foreground" />
         )}
         
-        {/* Delete button on hover */}
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onDelete(id);
-          }}
-          className="absolute top-2 left-2 h-8 w-8 bg-background/90 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-smooth hover:bg-destructive hover:text-destructive-foreground"
-        >
-          <Trash2 className="h-4 w-4" />
-        </button>
+        {/* Action buttons on hover */}
+        <div className="absolute top-2 left-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-smooth">
+          {onEdit && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onEdit({ id, name, category, color, season, image_url: imageUrl, description });
+              }}
+              className="h-8 w-8 bg-background/90 flex items-center justify-center hover:bg-accent hover:text-accent-foreground"
+            >
+              <Pencil className="h-4 w-4" />
+            </button>
+          )}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete(id);
+            }}
+            className="h-8 w-8 bg-background/90 flex items-center justify-center hover:bg-destructive hover:text-destructive-foreground"
+          >
+            <Trash2 className="h-4 w-4" />
+          </button>
+        </div>
       </div>
       
       {/* Info */}
